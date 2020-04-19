@@ -69,7 +69,6 @@ func TestGetEnvSlice(t *testing.T) {
 }
 
 func TestGetEnvSliceDefault(t *testing.T) {
-    t.Parallel()
     os.Unsetenv("SOME_LIST")
 	assert.Equal(t, []string{"0", "zero"},getEnvAsSlice("SOME_LIST", []string{"0","zero"}, ","))
 }
