@@ -16,13 +16,15 @@ func TestNewConfig(t *testing.T) {
     os.Setenv("DB_HOST", "castlevania.com")
     os.Setenv("DB_PORT", "7432")
     os.Setenv("DB_NAME", "draculaCastle")
+    os.Setenv("DB_SSL_ENABLE", "true")
 
     c := New()
-    assert.Equal(t, "Trevor", c.db.username)
-    assert.Equal(t, "Belmont", c.db.password)
-    assert.Equal(t, "castlevania.com", c.db.host)
-    assert.Equal(t, 7432, c.db.port)
-    assert.Equal(t, "draculaCastle", c.db.dbName)
+    assert.Equal(t, "Trevor", c.Db.Username)
+    assert.Equal(t, "Belmont", c.Db.Password)
+    assert.Equal(t, "castlevania.com", c.Db.Host)
+    assert.Equal(t, 7432, c.Db.Port)
+    assert.Equal(t, "draculaCastle", c.Db.DbName)
+    assert.Equal(t, true, c.Db.SslEnable)
 }
 
 func TestGetEnv(t *testing.T) {

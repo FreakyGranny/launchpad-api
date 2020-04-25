@@ -8,28 +8,30 @@ import (
 
 // PgConnection contains variables for postgres db connection
 type PgConnection struct {
-	username string
-	password string
-	host     string
-	port     int
-	dbName   string
+	Username  string
+	Password  string
+	Host      string
+	Port      int
+    DbName    string
+    SslEnable bool
 }
 
 // Config all app variables are stored here
 type Config struct {
-    db        PgConnection
+    Db        PgConnection
     DebugMode bool
 }
 
 // New returns a new Config struct
 func New() *Config {
     return &Config{
-	db: PgConnection{
-	    username: getEnv("DB_USERNAME", ""),
-		password: getEnv("DB_PASSWORD", ""),
-		host:     getEnv("DB_HOST", "localhost"),
-		port:     getEnvAsInt("DB_PORT", 5432),
-		dbName:   getEnv("DB_NAME", ""),
+	Db: PgConnection{
+	    Username:  getEnv("DB_USERNAME", ""),
+		Password:  getEnv("DB_PASSWORD", ""),
+		Host:      getEnv("DB_HOST", "localhost"),
+		Port:      getEnvAsInt("DB_PORT", 5432),
+        DbName:    getEnv("DB_NAME", ""),
+        SslEnable: getEnvAsBool("DB_SSL_ENABLE", false),
 	},
 	DebugMode: getEnvAsBool("DEBUG_MODE", true),
     }
