@@ -11,6 +11,13 @@
                 "kind": "build",
                 "isDefault": true
             },
+            "options": {
+                "env": {
+                    "DB_USERNAME": "lpad",
+                    "DB_PASSWORD": "qwerty123",
+                    "DB_NAME": "launchpad",
+                }
+            },            
             "problemMatcher": [
                 "$go"
             ]
