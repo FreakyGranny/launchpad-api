@@ -20,8 +20,11 @@ func Init() *echo.Echo {
 	e.OPTIONS("/login", api.Login)
 
 	// stubs
-	e.GET("/project", api.GetProjects)
 	e.GET("/donation", api.GetProjects)
+
+	p := e.Group("/project")
+	p.Use(middleware.JWT([]byte("secret")))
+	p.GET("", api.GetProjects)
 
 	u := e.Group("/user")
 	u.Use(middleware.JWT([]byte("secret")))
