@@ -16,10 +16,19 @@ type PgConnection struct {
     SslEnable bool
 }
 
+// VkAuth contains variables for vk authorization
+type VkAuth struct {
+	AppID        string
+	ClientSecret string
+	RedirectURI  string
+}
+
 // Config all app variables are stored here
 type Config struct {
     Db        PgConnection
+    Vk        VkAuth
     DebugMode bool
+    JWTSecret string
 }
 
 // New returns a new Config struct
@@ -32,8 +41,14 @@ func New() *Config {
 		Port:      getEnvAsInt("DB_PORT", 5432),
         DbName:    getEnv("DB_NAME", ""),
         SslEnable: getEnvAsBool("DB_SSL_ENABLE", false),
-	},
-	DebugMode: getEnvAsBool("DEBUG_MODE", true),
+    },
+	Vk: VkAuth{
+	    AppID:        getEnv("VK_APP_ID", ""),
+		ClientSecret: getEnv("VK_CLIENT_SECRET", ""),
+		RedirectURI:  getEnv("VK_REDIRECT_URI", ""),
+	},    
+    DebugMode: getEnvAsBool("DEBUG_MODE", false),
+    JWTSecret: getEnv("JWT_SECRET", "secret"),
     }
 }
 

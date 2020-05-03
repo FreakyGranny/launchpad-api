@@ -37,7 +37,7 @@ func Init(cfg config.PgConnection) {
 		panic("DB Connection Error")
 	}
 
-	db.AutoMigrate(&Product{})
+	db.AutoMigrate(&Product{}, &User{}, &Category{}, &ProjectType{})
 }
 
 // GetDbClient returns db client object 
