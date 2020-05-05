@@ -3,10 +3,10 @@ package main
 import (
 	"github.com/labstack/gommon/log"
 
-	"github.com/FreakyGranny/launchpad-api/db"
 	"github.com/FreakyGranny/launchpad-api/config"
-	"github.com/FreakyGranny/launchpad-api/route"
+	"github.com/FreakyGranny/launchpad-api/db"
 	"github.com/FreakyGranny/launchpad-api/misc"
+	"github.com/FreakyGranny/launchpad-api/route"
 )
   
 

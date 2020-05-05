@@ -3,7 +3,7 @@ package db
 import (
 	"fmt"
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/jinzhu/gorm/dialects/postgres" //nolint
 
 	"github.com/FreakyGranny/launchpad-api/config"
 )
@@ -37,7 +37,7 @@ func Init(cfg config.PgConnection) {
 		panic("DB Connection Error")
 	}
 
-	db.AutoMigrate(&Product{}, &User{}, &Category{}, &ProjectType{})
+	db.AutoMigrate(&Project{}, &User{}, &Category{}, &ProjectType{}, &Donation{})
 }
 
 // GetDbClient returns db client object 
