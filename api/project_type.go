@@ -3,8 +3,8 @@ package api
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v4"
 	"github.com/FreakyGranny/launchpad-api/db"
+	"github.com/labstack/echo/v4"
 )
 
 // GetProjectType return list of project types

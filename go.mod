@@ -9,4 +9,5 @@ require (
 	github.com/labstack/gommon v0.3.0
 	github.com/lib/pq v1.1.1
 	github.com/stretchr/testify v1.5.1
+	github.com/vcraescu/go-paginator v0.0.0-20200304054438-86d84f27c0b3
 )

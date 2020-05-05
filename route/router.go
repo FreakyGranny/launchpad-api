@@ -19,9 +19,6 @@ func Init() *echo.Echo {
 	e.POST("/login", api.Login)
 	e.OPTIONS("/login", api.Login)
 
-	// stubs
-	e.GET("/donation", api.GetProjects)
-
 	p := e.Group("/project")
 	p.Use(middleware.JWT([]byte("secret")))
 	p.GET("", api.GetProjects)
@@ -38,6 +35,10 @@ func Init() *echo.Echo {
 	pt := e.Group("/project_type")
 	pt.Use(middleware.JWT([]byte("secret")))
 	pt.GET("", api.GetProjectType)
+
+	d := e.Group("/donation")
+	d.Use(middleware.JWT([]byte("secret")))
+	d.GET("", api.GetDonation)
 
 	return e
 }
