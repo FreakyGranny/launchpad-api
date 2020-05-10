@@ -22,11 +22,12 @@ func Init() *echo.Echo {
 	p := e.Group("/project")
 	p.Use(middleware.JWT([]byte("secret")))
 	p.GET("", api.GetProjects)
+	p.GET("/:id", api.GetSingleProject)
 
 	u := e.Group("/user")
 	u.Use(middleware.JWT([]byte("secret")))
 	u.GET("", api.GetUsers)
-	// e.GET("/:id", api.GetUsers)
+	u.GET("/:id", api.GetUser)
 
 	c := e.Group("/category")
 	c.Use(middleware.JWT([]byte("secret")))

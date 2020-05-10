@@ -51,7 +51,7 @@ func Login(c echo.Context) error {
 		FirstName: userData.FirstName,
 		LastName: userData.LastName,
 		Avatar: userData.Avatar,
-		IsStuff: false,
+		IsStaff: false,
 	}
 
 	client := db.GetDbClient()
@@ -66,7 +66,7 @@ func Login(c echo.Context) error {
 
 	claims := token.Claims.(jwt.MapClaims)
 	claims["id"] = user.ID
-	claims["admin"] = user.IsStuff
+	claims["admin"] = user.IsStaff
 	claims["exp"] = time.Now().Add(time.Second * time.Duration(data.Expires)).Unix()
 
 	t, err := token.SignedString([]byte("secret"))
@@ -78,11 +78,3 @@ func Login(c echo.Context) error {
 		"token": t,
 	})
 }
-
-// // Restricted stub for testing
-// func Restricted(c echo.Context) error {
-// 	user := c.Get("user").(*jwt.Token)
-// 	claims := user.Claims.(jwt.MapClaims)
-// 	name := claims["id"].(string)
-// 	return c.String(http.StatusOK, "Welcome "+name+"!")
-// }

@@ -21,16 +21,16 @@ const (
 
 // User model
 type User struct {
-    ID        uint      `json:"id" gorm:"primary_key" `
-    CreatedAt time.Time `json:"-"`
-    UpdatedAt time.Time `json:"-"`
+    ID        uint       `json:"id" gorm:"primary_key" `
+    CreatedAt time.Time  `json:"-"`
+    UpdatedAt time.Time  `json:"-"`
 
     Username     string  `json:"username"`
     FirstName    string  `json:"first_name"`
     LastName     string  `json:"last_name"`
     Avatar       string  `json:"avatar"`
     Email        string  `gorm:"type:varchar(100)" json:"email"`
-    IsStuff      bool    `gorm:"default:false" json:"is_stuff"`
+    IsStaff      bool    `gorm:"default:false" json:"is_staff"`
     ProjectCount int     `gorm:"default:0" json:"project_count"`
     SuccessRate  float32 `gorm:"default:0" json:"success_rate"`
 }

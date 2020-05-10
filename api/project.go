@@ -5,7 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	// "github.com/labstack/gommon/log"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
 	"github.com/vcraescu/go-paginator"
 	"github.com/vcraescu/go-paginator/adapter"
@@ -35,11 +36,54 @@ type ProjectListEntry struct {
 	ProjectType db.ProjectType `json:"project_type"`
 }
 
+func filterQuery(userID int, filter string, dbClient *gorm.DB) *gorm.DB {
+	if filter == "open" {
+		return dbClient.Where("closed = ?", false)
+	}
+	if filter == "owned" {
+		return dbClient.Where("owner_id = ?", userID)
+	}
+	if filter == "contributed" {
+		return dbClient.Where("id IN (?)", dbClient.Table("donations").Select("project_id").Where("user_id = ?", userID).SubQuery())
+	}
+	
+	return dbClient
+}
+
+func filterQueryByCategory(categoryID int, dbClient *gorm.DB) *gorm.DB {
+	if categoryID != 0 {
+		return dbClient.Where("category_id = ?", categoryID)
+	}
+
+	return dbClient
+}
+
+func filterQueryByProjectType(projectType int, dbClient *gorm.DB) *gorm.DB {
+	if projectType != 0 {
+		return dbClient.Where("project_type_id = ?", projectType)
+	}
+
+	return dbClient
+}
+
+func filterQueryByUserID(userID int, dbClient *gorm.DB) *gorm.DB {
+	if userID != 0 {
+		return dbClient.Where("owner_id = ?", userID)
+	}
+
+	return dbClient
+}
+
 // GetProjects return list of projects
 func GetProjects(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(jwt.MapClaims)
+	userID := claims["id"].(float64)
+
 	categoryParam := c.QueryParam("category")
 	typeParam := c.QueryParam("type")
 	userParam := c.QueryParam("user")
+	filterParam := c.QueryParam("filter")
 
 	page := c.QueryParam("page")
 	pageSize := c.QueryParam("page_size")
@@ -55,17 +99,12 @@ func GetProjects(c echo.Context) error {
 
 	allRows := client.Preload("ProjectType").Preload("Category").Model(db.Project{}).Where("published = ?", true)  
   
-	if categoryInt != 0 {
-		allRows = allRows.Where("category_id = ?", categoryInt)
-	}
-	if typeInt != 0 {
-		allRows = allRows.Where("project_type_id = ?", typeInt)
-	}
-	if userInt != 0 {
-		allRows = allRows.Where("owner_id = ?", userInt)
-	}
+	allRows = filterQueryByCategory(categoryInt, allRows)
+	allRows = filterQueryByProjectType(typeInt, allRows)
+	allRows = filterQueryByUserID(userInt, allRows)
+	allRows = filterQuery(int(userID), filterParam, allRows)
 
-	paginated := paginator.New(adapter.NewGORMAdapter(allRows), pageSizeInt)
+	paginated := paginator.New(adapter.NewGORMAdapter(allRows.Order("id desc")), pageSizeInt)
 	paginated.SetPage(pageInt)
   
 	if err := paginated.Results(&projects); err != nil {
@@ -96,4 +135,19 @@ func GetProjects(c echo.Context) error {
 		NextPage: next,
 		HasNext: paginated.HasNext(),
 	})
+}
+
+// GetSingleProject return single project
+func GetSingleProject(c echo.Context) error {
+	projectParam := c.Param("id")
+	projectID, _ := strconv.Atoi(projectParam)
+  
+	dbClient := db.GetDbClient()
+	var project db.Project
+
+	if err := dbClient.Preload("ProjectType").Preload("Category").Preload("Owner").First(&project, projectID).Error; gorm.IsRecordNotFoundError(err) {
+		return c.JSON(http.StatusNotFound, nil)
+	}
+
+	return c.JSON(http.StatusOK, project)
 }
