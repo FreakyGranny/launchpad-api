@@ -22,8 +22,9 @@ func Init() *echo.Echo {
 	p := e.Group("/project")
 	p.Use(middleware.JWT([]byte("secret")))
 	p.GET("", api.GetProjects)
-	p.GET("/:id", api.GetSingleProject)
 	p.POST("", api.CreateProject)
+	p.GET("/:id", api.GetSingleProject)
+	p.PATCH("/:id", api.UpdateProject)
 
 	u := e.Group("/user")
 	u.Use(middleware.JWT([]byte("secret")))

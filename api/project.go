@@ -15,7 +15,10 @@ import (
 	"github.com/FreakyGranny/launchpad-api/db"
 )
 
-const dateLayout = "2006-01-02"
+const (
+	dateLayout = "2006-01-02"
+	dateTimeLayout = "2006-01-02 15:04:05"
+)
 
 // ProjectListResponse paginated projects
 type ProjectListResponse struct {
@@ -46,7 +49,7 @@ type ProjectDetailView struct {
 	SubTitle      string         `json:"subtitle"`
 	Status        string         `json:"status"`
 	ReleaseDate   string         `json:"release_date"`
-	EventDate     string         `json:"event_date"`
+	EventDate     *string        `json:"event_date"`
 	ImageLink     string         `json:"image_link"`
 	Total         uint           `json:"total"`
 	Percent       uint           `json:"percent"`
@@ -59,7 +62,7 @@ type ProjectDetailView struct {
     Owner         db.User        `json:"owner"`
 }
 
-type projectCreateRequest struct {
+type projectRequest struct {
 	Title        string `json:"title"`
 	SubTitle     string `json:"subtitle"`
 	ReleaseDate  string `json:"release_date"`
@@ -71,6 +74,7 @@ type projectCreateRequest struct {
 	Instructions string `json:"instructions"`
 	Description  string `json:"description"`
 	ProjectType  uint   `json:"project_type"`
+	Published    bool   `json:"published,omitempty"`
 }
 
 
@@ -162,7 +166,7 @@ func GetProjects(c echo.Context) error {
 			SubTitle: project.SubTitle,
 			Status: project.Status(),
 			ReleaseDate: project.ReleaseDate.Format(dateLayout),
-			EventDate: project.EventDate.Format(dateLayout),
+			EventDate: project.EventDate.Format(dateTimeLayout),
 			ImageLink: project.ImageLink,
 			Total: project.Total,
 			Percent: project.Percent(),
@@ -189,14 +193,12 @@ func GetSingleProject(c echo.Context) error {
 	if err := dbClient.Preload("ProjectType").Preload("Category").Preload("Owner").First(&project, projectID).Error; gorm.IsRecordNotFoundError(err) {
 		return c.JSON(http.StatusNotFound, nil)
 	}
-
-	return c.JSON(http.StatusOK, ProjectDetailView{
+	projectResponse := ProjectDetailView{
 		ID: project.ID,
 		Title: project.Title,
 		SubTitle: project.SubTitle,
 		Status: project.Status(),
 		ReleaseDate: project.ReleaseDate.Format(dateLayout),
-		EventDate: project.EventDate.Format(dateLayout),
 		ImageLink: project.ImageLink,
 		Total: project.Total,
 		Percent: project.Percent(),
@@ -207,12 +209,21 @@ func GetSingleProject(c echo.Context) error {
 		Description: project.Description,
 		Instructions: project.Instructions,
 		Owner: project.Owner,
-	})
+	}
+
+	if project.EventDate.IsZero() {
+		projectResponse.EventDate = nil
+	} else {
+		ed := project.EventDate.Format(dateTimeLayout)
+		projectResponse.EventDate = &ed
+	}
+
+	return c.JSON(http.StatusOK, projectResponse)
 }
 
 // CreateProject create new project
 func CreateProject(c echo.Context) error {
-	cpRequest := new(projectCreateRequest)
+	cpRequest := new(projectRequest)
 	if err := c.Bind(cpRequest); err != nil {
 		return err
 	}
@@ -254,4 +265,83 @@ func CreateProject(c echo.Context) error {
 	return c.JSON(http.StatusCreated, map[string]uint{
 		"id": newProject.ID,
 	})
+}
+
+// UpdateProject update single value of project
+func UpdateProject(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(jwt.MapClaims)
+	userID := claims["id"].(float64)
+
+	projectParam := c.Param("id")
+	projectID, _ := strconv.Atoi(projectParam)
+  
+	dbClient := db.GetDbClient()
+	var project db.Project
+
+	if err := dbClient.Where("owner_id = ?", userID).First(&project, projectID).Error; gorm.IsRecordNotFoundError(err) {
+		return c.JSON(http.StatusNotFound, nil)
+	}
+	
+	upRequest := new(projectRequest)
+	if err := c.Bind(upRequest); err != nil {
+		return err
+	}
+	// log.Info(upRequest.SubTitle)
+	var parseErr error
+	releaseTime := project.ReleaseDate
+	eventTime := project.EventDate
+
+	if upRequest.ReleaseDate != "" {
+		releaseTime, parseErr = time.Parse(dateLayout, upRequest.ReleaseDate)
+		if parseErr != nil {
+			return parseErr
+		}
+	}
+	if upRequest.EventDate != "" {
+		eventTime, parseErr = time.Parse(dateTimeLayout, upRequest.EventDate)
+		if parseErr != nil {
+			return parseErr
+		}
+	}
+	dbClient.Model(&project).Updates(db.Project{
+		Title: upRequest.Title,
+		SubTitle: upRequest.SubTitle,
+		Instructions: upRequest.Instructions,
+		Description: upRequest.Description,
+		ImageLink: upRequest.ImageLink,
+		CategoryID: upRequest.Category,
+		ProjectTypeID: upRequest.ProjectType,
+		GoalAmount: upRequest.GoalAmount,
+		GoalPeople: upRequest.GoalPeople,
+		ReleaseDate: releaseTime,
+		EventDate: eventTime,
+		Published: upRequest.Published,
+	})
+
+	projectResponse := ProjectDetailView{
+		ID: project.ID,
+		Title: project.Title,
+		SubTitle: project.SubTitle,
+		Status: project.Status(),
+		ReleaseDate: project.ReleaseDate.Format(dateLayout),
+		ImageLink: project.ImageLink,
+		Total: project.Total,
+		Percent: project.Percent(),
+		Category: project.Category,
+		ProjectType: project.ProjectType,
+		GoalPeople: project.GoalPeople,
+		GoalAmount: project.GoalAmount,
+		Description: project.Description,
+		Instructions: project.Instructions,
+		Owner: project.Owner,
+	}
+	if project.EventDate.IsZero() {
+		projectResponse.EventDate = nil
+	} else {
+		ed := project.EventDate.Format(dateTimeLayout)
+		projectResponse.EventDate = &ed
+	}
+
+	return c.JSON(http.StatusOK, projectResponse)
 }
