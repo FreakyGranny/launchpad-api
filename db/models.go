@@ -37,28 +37,28 @@ type User struct {
 
 // Project model
 type Project struct {
-    ID            uint        `gorm:"primary_key" json:"id"`
-    CreatedAt     time.Time   `json:"-"`
-    UpdatedAt     time.Time   `json:"-"`
-    Title         string      `gorm:"not null; size:100" json:"title"`
-    SubTitle      string      `gorm:"size:100" json:"subtitle"`
-    ReleaseDate   time.Time   `gorm:"not null" json:"release_date"`
-    EventDate     time.Time   `json:"event_date"`
-    GoalPeople    uint        `gorm:"not null; default:0" json:"goal_people"`
-    GoalAmount    uint        `gorm:"not null; default:0" json:"goal_amount"`
-    Total         uint        `gorm:"not null; default:0" json:"total"`
-    Description   string      `gorm:"size:1000" json:"description"`
-    ImageLink     string      `gorm:"not null; size:200" json:"image_link"`
-    Instructions  string      `gorm:"size:500" json:"instructions"`
-    Locked        bool        `gorm:"not null; default=false" json:"-"`
-    Published     bool        `gorm:"not null; default=false" json:"-"`
-    Closed        bool        `gorm:"not null; default=false" json:"-"`
-    Owner         User        `json:"owner"`
-    OwnerID       uint        `json:"-"`
-    Category      Category    `json:"category"`
-    CategoryID    uint        `json:"-"`
-    ProjectType   ProjectType `json:"project_type"`
-    ProjectTypeID uint        `json:"-"`
+    ID            uint        `gorm:"primary_key"`
+    CreatedAt     time.Time
+    UpdatedAt     time.Time
+    Title         string      `gorm:"not null; size:100"`
+    SubTitle      string      `gorm:"size:100"`
+    ReleaseDate   time.Time   `gorm:"not null"`
+    EventDate     time.Time
+    GoalPeople    uint        `gorm:"not null; default:0"`
+    GoalAmount    uint        `gorm:"not null; default:0"`
+    Total         uint        `gorm:"not null; default:0"`
+    Description   string      `gorm:"size:1000"`
+    ImageLink     string      `gorm:"not null; size:200"`
+    Instructions  string      `gorm:"size:500"`
+    Locked        bool        `gorm:"not null; default=false"`
+    Published     bool        `gorm:"not null; default=false"`
+    Closed        bool        `gorm:"not null; default=false"`
+    Owner         User
+    OwnerID       uint
+    Category      Category
+    CategoryID    uint
+    ProjectType   ProjectType
+    ProjectTypeID uint
 }
 
 // Status of project

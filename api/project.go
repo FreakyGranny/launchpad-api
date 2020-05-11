@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	// "github.com/labstack/gommon/log"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
@@ -14,21 +15,23 @@ import (
 	"github.com/FreakyGranny/launchpad-api/db"
 )
 
+const dateLayout = "2006-01-02"
+
 // ProjectListResponse paginated projects
 type ProjectListResponse struct {
-	Results  []ProjectListEntry `json:"results"`
+	Results  []ProjectListView  `json:"results"`
 	NextPage int                `json:"next"`
 	HasNext  bool               `json:"has_next"`
 }
 
-// ProjectListEntry light project entry
-type ProjectListEntry struct {
+// ProjectListView light project entry
+type ProjectListView struct {
 	ID          uint           `json:"id"`
 	Title       string         `json:"title"`
 	SubTitle    string         `json:"subtitle"`
 	Status      string         `json:"status"`
-	ReleaseDate time.Time      `json:"release_date"`
-	EventDate   time.Time      `json:"event_date"`
+	ReleaseDate string         `json:"release_date"`
+	EventDate   string         `json:"event_date"`
 	ImageLink   string         `json:"image_link"`
 	Total       uint           `json:"total"`
 	Percent     uint           `json:"percent"`
@@ -36,18 +39,56 @@ type ProjectListEntry struct {
 	ProjectType db.ProjectType `json:"project_type"`
 }
 
+// ProjectDetailView light project entry
+type ProjectDetailView struct {
+	ID            uint           `json:"id"`
+	Title         string         `json:"title"`
+	SubTitle      string         `json:"subtitle"`
+	Status        string         `json:"status"`
+	ReleaseDate   string         `json:"release_date"`
+	EventDate     string         `json:"event_date"`
+	ImageLink     string         `json:"image_link"`
+	Total         uint           `json:"total"`
+	Percent       uint           `json:"percent"`
+	Category      db.Category    `json:"category"`
+	ProjectType   db.ProjectType `json:"project_type"`
+    GoalPeople    uint           `json:"goal_people"`
+    GoalAmount    uint           `json:"goal_amount"`
+    Description   string         `json:"description"`
+    Instructions  string         `json:"instructions"`
+    Owner         db.User        `json:"owner"`
+}
+
+type projectCreateRequest struct {
+	Title        string `json:"title"`
+	SubTitle     string `json:"subtitle"`
+	ReleaseDate  string `json:"release_date"`
+	EventDate    string `json:"event_date,omitempty"`
+	Category     uint   `json:"category"`
+	GoalPeople   uint   `json:"goal_people"`
+	GoalAmount   uint   `json:"goal_amount"`
+	ImageLink    string `json:"image_link"`
+	Instructions string `json:"instructions"`
+	Description  string `json:"description"`
+	ProjectType  uint   `json:"project_type"`
+}
+
+
 func filterQuery(userID int, filter string, dbClient *gorm.DB) *gorm.DB {
+	query := dbClient
 	if filter == "open" {
-		return dbClient.Where("closed = ?", false)
+		query = query.Where("closed = ?", false)
 	}
 	if filter == "owned" {
-		return dbClient.Where("owner_id = ?", userID)
+		query = query.Where("owner_id = ?", userID)
+	} else {
+		query = query.Where("published = ?", true)
 	}
 	if filter == "contributed" {
-		return dbClient.Where("id IN (?)", dbClient.Table("donations").Select("project_id").Where("user_id = ?", userID).SubQuery())
+		query = query.Where("id IN (?)", dbClient.Table("donations").Select("project_id").Where("user_id = ?", userID).SubQuery())
 	}
 	
-	return dbClient
+	return query
 }
 
 func filterQueryByCategory(categoryID int, dbClient *gorm.DB) *gorm.DB {
@@ -97,7 +138,7 @@ func GetProjects(c echo.Context) error {
 	client := db.GetDbClient()
 	var projects []db.Project
 
-	allRows := client.Preload("ProjectType").Preload("Category").Model(db.Project{}).Where("published = ?", true)  
+	allRows := client.Preload("ProjectType").Preload("Category").Model(db.Project{})  
   
 	allRows = filterQueryByCategory(categoryInt, allRows)
 	allRows = filterQueryByProjectType(typeInt, allRows)
@@ -112,16 +153,16 @@ func GetProjects(c echo.Context) error {
 			}
 	next, _ := paginated.NextPage()
 	
-	projectListEntries := make([]ProjectListEntry, 0)
+	projectListEntries := make([]ProjectListView, 0)
 
 	for _, project := range(projects) {
-		projectListEntries = append(projectListEntries, ProjectListEntry{
+		projectListEntries = append(projectListEntries, ProjectListView{
 			ID: project.ID,
 			Title: project.Title,
 			SubTitle: project.SubTitle,
 			Status: project.Status(),
-			ReleaseDate: project.ReleaseDate,
-			EventDate: project.EventDate,
+			ReleaseDate: project.ReleaseDate.Format(dateLayout),
+			EventDate: project.EventDate.Format(dateLayout),
 			ImageLink: project.ImageLink,
 			Total: project.Total,
 			Percent: project.Percent(),
@@ -149,5 +190,68 @@ func GetSingleProject(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, nil)
 	}
 
-	return c.JSON(http.StatusOK, project)
+	return c.JSON(http.StatusOK, ProjectDetailView{
+		ID: project.ID,
+		Title: project.Title,
+		SubTitle: project.SubTitle,
+		Status: project.Status(),
+		ReleaseDate: project.ReleaseDate.Format(dateLayout),
+		EventDate: project.EventDate.Format(dateLayout),
+		ImageLink: project.ImageLink,
+		Total: project.Total,
+		Percent: project.Percent(),
+		Category: project.Category,
+		ProjectType: project.ProjectType,
+		GoalPeople: project.GoalPeople,
+		GoalAmount: project.GoalAmount,
+		Description: project.Description,
+		Instructions: project.Instructions,
+		Owner: project.Owner,
+	})
+}
+
+// CreateProject create new project
+func CreateProject(c echo.Context) error {
+	cpRequest := new(projectCreateRequest)
+	if err := c.Bind(cpRequest); err != nil {
+		return err
+	}
+
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(jwt.MapClaims)
+	userID := claims["id"].(float64)
+
+	releaseTime, err := time.Parse(dateLayout, cpRequest.ReleaseDate)
+	if err != nil {
+		return err
+	}
+	var eventTime time.Time
+
+	if cpRequest.EventDate != "" {
+		eventTime, err = time.Parse(dateLayout, cpRequest.EventDate)
+		if err != nil {
+			return err
+		}
+	}
+
+	newProject := db.Project{
+		OwnerID: uint(userID),
+		Title: cpRequest.Title,
+		SubTitle: cpRequest.SubTitle,
+		ReleaseDate: releaseTime,
+		EventDate: eventTime,
+		GoalPeople: cpRequest.GoalPeople,
+		GoalAmount: cpRequest.GoalAmount,
+		Description: cpRequest.Description,
+		ImageLink: cpRequest.ImageLink,
+		Instructions: cpRequest.Instructions,
+		CategoryID: cpRequest.Category,
+		ProjectTypeID: cpRequest.ProjectType,
+	}
+	client := db.GetDbClient()
+	client.Create(&newProject)
+
+	return c.JSON(http.StatusCreated, map[string]uint{
+		"id": newProject.ID,
+	})
 }
