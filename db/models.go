@@ -30,9 +30,9 @@ type User struct {
     LastName     string  `json:"last_name"`
     Avatar       string  `json:"avatar"`
     Email        string  `gorm:"type:varchar(100)" json:"email"`
-    IsStaff      bool    `gorm:"default:false" json:"is_staff"`
-    ProjectCount int     `gorm:"default:0" json:"project_count"`
-    SuccessRate  float32 `gorm:"default:0" json:"success_rate"`
+    IsStaff      bool    `gorm:"default=false" json:"is_staff"`
+    ProjectCount int     `gorm:"default=0" json:"project_count"`
+    SuccessRate  float32 `gorm:"default=0" json:"success_rate"`
 }
 
 // Project model
@@ -44,9 +44,9 @@ type Project struct {
     SubTitle      string      `gorm:"size:100"`
     ReleaseDate   time.Time   `gorm:"not null"`
     EventDate     time.Time
-    GoalPeople    uint        `gorm:"not null; default:0"`
-    GoalAmount    uint        `gorm:"not null; default:0"`
-    Total         uint        `gorm:"not null; default:0"`
+    GoalPeople    uint        `gorm:"not null; default=0"`
+    GoalAmount    uint        `gorm:"not null; default=0"`
+    Total         uint        `gorm:"not null; default=0"`
     Description   string      `gorm:"size:1000"`
     ImageLink     string      `gorm:"not null; size:200"`
     Instructions  string      `gorm:"size:500"`
@@ -106,10 +106,10 @@ type ProjectType struct {
 type Donation struct {
     ID        uint    `gorm:"primary_key" json:"id"`
     User      User    `json:"-"`
-    UserID    int     `json:"user"`
+    UserID    uint    `json:"user"`
     Project   Project `json:"-"`
-    ProjectID int     `json:"project"`
-    Payment   int     `gorm:"not null; default:0" json:"payment"`
-    Locked    bool    `gorm:"not null" json:"locked"`
-    Paid      bool    `gorm:"not null" json:"paid"`
+    ProjectID uint    `json:"project"`
+    Payment   uint    `gorm:"not null; default=0" json:"payment"`
+    Locked    bool    `gorm:"not null; default=false" json:"locked"`
+    Paid      bool    `gorm:"not null; default=false" json:"paid"`
 }

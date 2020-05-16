@@ -42,6 +42,8 @@ func Init() *echo.Echo {
 	d := e.Group("/donation")
 	d.Use(middleware.JWT([]byte("secret")))
 	d.GET("", api.GetDonation)
+	d.POST("", api.CreateDonation)
+	d.DELETE("/:id", api.DeleteDonation)
 
 	return e
 }
