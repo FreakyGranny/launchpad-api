@@ -13,6 +13,7 @@ import (
 	"github.com/vcraescu/go-paginator/adapter"
 
 	"github.com/FreakyGranny/launchpad-api/db"
+	"github.com/FreakyGranny/launchpad-api/misc"
 )
 
 const (
@@ -160,6 +161,10 @@ func GetProjects(c echo.Context) error {
 	projectListEntries := make([]ProjectListView, 0)
 
 	for _, project := range(projects) {
+		strategy, err := misc.GetStrategy(project.ProjectType)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, nil)
+		}
 		projectListEntries = append(projectListEntries, ProjectListView{
 			ID: project.ID,
 			Title: project.Title,
@@ -169,7 +174,7 @@ func GetProjects(c echo.Context) error {
 			EventDate: project.EventDate.Format(dateTimeLayout),
 			ImageLink: project.ImageLink,
 			Total: project.Total,
-			Percent: project.Percent(),
+			Percent: strategy.Percent(&project),
 			Category: project.Category,
 			ProjectType: project.ProjectType,
 		})
@@ -193,6 +198,11 @@ func GetSingleProject(c echo.Context) error {
 	if err := dbClient.Preload("ProjectType").Preload("Category").Preload("Owner").First(&project, projectID).Error; gorm.IsRecordNotFoundError(err) {
 		return c.JSON(http.StatusNotFound, nil)
 	}
+	strategy, err := misc.GetStrategy(project.ProjectType)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, nil)
+	}
+
 	projectResponse := ProjectDetailView{
 		ID: project.ID,
 		Title: project.Title,
@@ -201,7 +211,7 @@ func GetSingleProject(c echo.Context) error {
 		ReleaseDate: project.ReleaseDate.Format(dateLayout),
 		ImageLink: project.ImageLink,
 		Total: project.Total,
-		Percent: project.Percent(),
+		Percent: strategy.Percent(&project),
 		Category: project.Category,
 		ProjectType: project.ProjectType,
 		GoalPeople: project.GoalPeople,
@@ -319,6 +329,10 @@ func UpdateProject(c echo.Context) error {
 		Published: upRequest.Published,
 	})
 
+	strategy, err := misc.GetStrategy(project.ProjectType)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, nil)
+	}
 	projectResponse := ProjectDetailView{
 		ID: project.ID,
 		Title: project.Title,
@@ -327,7 +341,7 @@ func UpdateProject(c echo.Context) error {
 		ReleaseDate: project.ReleaseDate.Format(dateLayout),
 		ImageLink: project.ImageLink,
 		Total: project.Total,
-		Percent: project.Percent(),
+		Percent: strategy.Percent(&project),
 		Category: project.Category,
 		ProjectType: project.ProjectType,
 		GoalPeople: project.GoalPeople,

@@ -79,11 +79,6 @@ func (p *Project) Status() string {
     return StatusSearch
 }
 
-// Percent of project
-func (p *Project) Percent() uint {
-    return 30
-}
-
 // Category of project
 type Category struct {
     ID    uint   `gorm:"primary_key" json:"id"`
