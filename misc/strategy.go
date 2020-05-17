@@ -8,7 +8,9 @@ import (
 // Strategy project strategy depends on type
 type Strategy interface{
 	Percent(p *db.Project) uint
+	Recalc(projectID uint) uint
 }
+
 
 // MoneyFastStrategy simple money type
 type MoneyFastStrategy struct{}
@@ -22,6 +24,22 @@ func (s *MoneyFastStrategy) Percent(p *db.Project) uint {
 	return uint(float64(p.Total) / float64(p.GoalAmount) * 100)
 }
 
+// Recalc recalculate project
+func (s *MoneyFastStrategy) Recalc(projectID uint) uint {
+	dbClient := db.GetDbClient()
+	var donations []db.Donation
+	var total uint = 0
+
+	dbClient.Where("project_id = ?", projectID).Find(&donations)
+
+	for _, d := range(donations) {
+		total += d.Payment
+	}
+
+	return total
+}
+
+
 // MoneyEqualStrategy simple money type
 type MoneyEqualStrategy struct{}
 
@@ -33,6 +51,16 @@ func (s *MoneyEqualStrategy) Percent(p *db.Project) uint {
 	
 	return uint(float64(p.Total) / float64(p.GoalPeople) * 100)
 }
+
+// Recalc recalculate project
+func (s *MoneyEqualStrategy) Recalc(projectID uint) uint{
+	dbClient := db.GetDbClient()
+	var donationCount uint
+	dbClient.Model(&db.Donation{}).Where("project_id = ?", projectID).Count(&donationCount)
+
+	return donationCount
+}
+
 
 // EventDateStrategy simple money type
 type EventDateStrategy struct{}
@@ -46,6 +74,16 @@ func (s *EventDateStrategy) Percent(p *db.Project) uint {
 	return uint(float64(p.Total) / float64(p.GoalPeople) * 100)
 }
 
+// Recalc recalculate project
+func (s *EventDateStrategy) Recalc(projectID uint) uint{
+	dbClient := db.GetDbClient()
+	var donationCount uint
+	dbClient.Model(&db.Donation{}).Where("project_id = ?", projectID).Count(&donationCount)
+
+	return donationCount
+}
+
+
 // EventFastStrategy simple money type
 type EventFastStrategy struct{}
 
@@ -56,6 +94,15 @@ func (s *EventFastStrategy) Percent(p *db.Project) uint {
 	}
 	
 	return uint(float64(p.Total) / float64(p.GoalPeople) * 100)
+}
+
+// Recalc recalculate project
+func (s *EventFastStrategy) Recalc(projectID uint) uint {
+	dbClient := db.GetDbClient()
+	var donationCount uint
+	dbClient.Model(&db.Donation{}).Where("project_id = ?", projectID).Count(&donationCount)
+
+	return donationCount
 }
 
 

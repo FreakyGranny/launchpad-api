@@ -9,6 +9,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 	"github.com/FreakyGranny/launchpad-api/db"
+	"github.com/FreakyGranny/launchpad-api/misc"
 )
 
 type createRequest struct {
@@ -91,6 +92,8 @@ func CreateDonation(c echo.Context) error {
 		UserID: uint(userID),
 	}
 	dbClient.Create(&newDonation)
+	ch := misc.GetRecalcPipe()
+	ch <- newDonation.ProjectID
 
 	return c.JSON(http.StatusOK, newDonation)
 }
@@ -115,6 +118,8 @@ func DeleteDonation(c echo.Context) error {
 		return c.JSON(http.StatusForbidden, nil)
 	}
 	dbClient.Delete(&donation)
+	ch := misc.GetRecalcPipe()
+	ch <- donation.ProjectID
 
 	return c.JSON(http.StatusNoContent, nil)
 }
@@ -146,7 +151,9 @@ func UpdateDonation(c echo.Context) error {
 	}
 	if !donation.Locked && donation.User.ID == uint(userID) {
 		dbClient.Model(&donation).Update("payment", request.Payment)
-
+		ch := misc.GetRecalcPipe()
+		ch <- donation.ProjectID
+		
 		return c.JSON(http.StatusOK, donation)
 	}
 

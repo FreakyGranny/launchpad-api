@@ -18,6 +18,9 @@ func main() {
 
 	misc.VkInit(cfg.Vk)
 	db.Init(cfg.Db)
+	misc.BackgroundInit()
+
+	go misc.RecalcProject(misc.GetRecalcPipe())
 
 	client := db.GetDbClient()
 	defer client.Close()
