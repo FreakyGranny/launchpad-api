@@ -44,6 +44,7 @@ func Init() *echo.Echo {
 	d.GET("", api.GetDonation)
 	d.POST("", api.CreateDonation)
 	d.DELETE("/:id", api.DeleteDonation)
+	d.PATCH("/:id", api.UpdateDonation)
 
 	return e
 }

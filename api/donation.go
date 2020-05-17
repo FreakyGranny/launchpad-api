@@ -16,6 +16,11 @@ type createRequest struct {
 	Payment   uint `json:"payment"`
 }
 
+type updateRequest struct {
+	Paid    bool `json:"paid,omitempty"`
+	Payment uint `json:"payment,omitempty"`
+}
+
 // ProjectDonation for project donations response
 type ProjectDonation struct {
     ID        uint    `json:"id"`
@@ -112,4 +117,38 @@ func DeleteDonation(c echo.Context) error {
 	dbClient.Delete(&donation)
 
 	return c.JSON(http.StatusNoContent, nil)
+}
+
+// UpdateDonation return list of users
+func UpdateDonation(c echo.Context) error {
+	request := new(updateRequest)
+	if err := c.Bind(request); err != nil {
+		return c.JSON(http.StatusBadRequest, nil)
+	}
+	idParam := c.Param("id")
+	donationID, _ := strconv.Atoi(idParam)
+
+	dbClient := db.GetDbClient()
+	var donation db.Donation
+	
+	if err := dbClient.Preload("Project").Preload("User").First(&donation, donationID).Error; gorm.IsRecordNotFoundError(err) {
+		return c.JSON(http.StatusNotFound, nil)
+	}
+
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(jwt.MapClaims)
+	userID := claims["id"].(float64)
+
+	if donation.Locked && donation.Project.OwnerID == uint(userID) {
+		dbClient.Model(&donation).Update("paid", request.Paid)
+
+		return c.JSON(http.StatusOK, donation)
+	}
+	if !donation.Locked && donation.User.ID == uint(userID) {
+		dbClient.Model(&donation).Update("payment", request.Payment)
+
+		return c.JSON(http.StatusOK, donation)
+	}
+
+	return c.JSON(http.StatusForbidden, nil)
 }
