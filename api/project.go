@@ -35,7 +35,7 @@ type ProjectListView struct {
 	SubTitle    string         `json:"subtitle"`
 	Status      string         `json:"status"`
 	ReleaseDate string         `json:"release_date"`
-	EventDate   string         `json:"event_date"`
+	EventDate   *string        `json:"event_date"`
 	ImageLink   string         `json:"image_link"`
 	Total       uint           `json:"total"`
 	Percent     uint           `json:"percent"`
@@ -165,19 +165,27 @@ func GetProjects(c echo.Context) error {
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, nil)
 		}
-		projectListEntries = append(projectListEntries, ProjectListView{
+		plv := ProjectListView{
 			ID: project.ID,
 			Title: project.Title,
 			SubTitle: project.SubTitle,
 			Status: project.Status(),
 			ReleaseDate: project.ReleaseDate.Format(dateLayout),
-			EventDate: project.EventDate.Format(dateTimeLayout),
 			ImageLink: project.ImageLink,
 			Total: project.Total,
 			Percent: strategy.Percent(&project),
 			Category: project.Category,
 			ProjectType: project.ProjectType,
-		})
+		}
+		
+		if project.EventDate.IsZero() {
+			plv.EventDate = nil
+		} else {
+			ed := project.EventDate.Format(dateTimeLayout)
+			plv.EventDate = &ed
+		}
+
+		projectListEntries = append(projectListEntries, plv)
 	}
 
 	return c.JSON(http.StatusOK, ProjectListResponse{
@@ -289,15 +297,17 @@ func UpdateProject(c echo.Context) error {
 	dbClient := db.GetDbClient()
 	var project db.Project
 
-	if err := dbClient.Where("owner_id = ?", userID).First(&project, projectID).Error; gorm.IsRecordNotFoundError(err) {
+	if err := dbClient.Preload("ProjectType").Where("owner_id = ?", userID).First(&project, projectID).Error; gorm.IsRecordNotFoundError(err) {
 		return c.JSON(http.StatusNotFound, nil)
 	}
-	
+	if project.Published {
+		return c.JSON(http.StatusForbidden, nil)
+	}
+
 	upRequest := new(projectRequest)
 	if err := c.Bind(upRequest); err != nil {
 		return err
 	}
-	// log.Info(upRequest.SubTitle)
 	var parseErr error
 	releaseTime := project.ReleaseDate
 	eventTime := project.EventDate
@@ -328,7 +338,10 @@ func UpdateProject(c echo.Context) error {
 		EventDate: eventTime,
 		Published: upRequest.Published,
 	})
-
+	if upRequest.Published {
+		ch := misc.GetUpdatePipe()
+		ch <- project.OwnerID
+	}
 	strategy, err := misc.GetStrategy(project.ProjectType)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, nil)

@@ -20,7 +20,8 @@ func main() {
 	db.Init(cfg.Db)
 	misc.BackgroundInit()
 
-	go misc.RecalcProject(misc.GetRecalcPipe())
+	go misc.RecalcProject()
+	go misc.UpdateUser()
 
 	client := db.GetDbClient()
 	defer client.Close()

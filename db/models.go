@@ -31,7 +31,7 @@ type User struct {
     Avatar       string  `json:"avatar"`
     Email        string  `gorm:"type:varchar(100)" json:"email"`
     IsStaff      bool    `gorm:"default=false" json:"is_staff"`
-    ProjectCount int     `gorm:"default=0" json:"project_count"`
+    ProjectCount uint    `gorm:"default=0" json:"project_count"`
     SuccessRate  float32 `gorm:"default=0" json:"success_rate"`
 }
 
