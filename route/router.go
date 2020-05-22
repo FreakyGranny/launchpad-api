@@ -25,6 +25,7 @@ func Init() *echo.Echo {
 	p.POST("", api.CreateProject)
 	p.GET("/:id", api.GetSingleProject)
 	p.PATCH("/:id", api.UpdateProject)
+	p.DELETE("/:id", api.DeleteProject)
 
 	u := e.Group("/user")
 	u.Use(middleware.JWT([]byte("secret")))

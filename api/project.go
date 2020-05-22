@@ -297,10 +297,10 @@ func UpdateProject(c echo.Context) error {
 	dbClient := db.GetDbClient()
 	var project db.Project
 
-	if err := dbClient.Preload("ProjectType").Where("owner_id = ?", userID).First(&project, projectID).Error; gorm.IsRecordNotFoundError(err) {
+	if err := dbClient.Preload("ProjectType").First(&project, projectID).Error; gorm.IsRecordNotFoundError(err) {
 		return c.JSON(http.StatusNotFound, nil)
 	}
-	if project.Published {
+	if project.Published || project.OwnerID != uint(userID) {
 		return c.JSON(http.StatusForbidden, nil)
 	}
 
@@ -371,4 +371,28 @@ func UpdateProject(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, projectResponse)
+}
+
+// DeleteProject delete project
+func DeleteProject(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(jwt.MapClaims)
+	userID := claims["id"].(float64)
+
+	projectParam := c.Param("id")
+	projectID, _ := strconv.Atoi(projectParam)
+  
+	dbClient := db.GetDbClient()
+	var project db.Project
+
+	if err := dbClient.First(&project, projectID).Error; gorm.IsRecordNotFoundError(err) {
+		return c.JSON(http.StatusNotFound, nil)
+	}
+	if project.Published || project.OwnerID != uint(userID) {
+		return c.JSON(http.StatusForbidden, nil)
+	}
+
+	dbClient.Delete(&project)
+
+	return c.JSON(http.StatusNoContent, nil)
 }

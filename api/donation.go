@@ -98,7 +98,7 @@ func CreateDonation(c echo.Context) error {
 	return c.JSON(http.StatusOK, newDonation)
 }
 
-// DeleteDonation return list of users
+// DeleteDonation delete not locked donation
 func DeleteDonation(c echo.Context) error {
 	idParam := c.Param("id")
 	donationID, _ := strconv.Atoi(idParam)
@@ -124,7 +124,7 @@ func DeleteDonation(c echo.Context) error {
 	return c.JSON(http.StatusNoContent, nil)
 }
 
-// UpdateDonation return list of users
+// UpdateDonation update not locked donation
 func UpdateDonation(c echo.Context) error {
 	request := new(updateRequest)
 	if err := c.Bind(request); err != nil {
