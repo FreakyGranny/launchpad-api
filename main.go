@@ -22,6 +22,7 @@ func main() {
 
 	go misc.RecalcProject()
 	go misc.UpdateUser()
+	go misc.HarvestCheck()
 
 	client := db.GetDbClient()
 	defer client.Close()

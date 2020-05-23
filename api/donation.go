@@ -146,6 +146,8 @@ func UpdateDonation(c echo.Context) error {
 
 	if donation.Locked && donation.Project.OwnerID == uint(userID) {
 		dbClient.Model(&donation).Update("paid", request.Paid)
+		ch := misc.GetHarvestPipe()
+		ch <- donation.ProjectID
 
 		return c.JSON(http.StatusOK, donation)
 	}

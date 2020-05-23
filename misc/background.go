@@ -6,13 +6,15 @@ import (
 	"github.com/FreakyGranny/launchpad-api/db"
 )
 
-var recalcPipe chan uint
-var updatePipe chan uint
+var recalcPipe  chan uint
+var updatePipe  chan uint
+var harvestPipe chan uint
 
 // BackgroundInit background channels
 func BackgroundInit() {
 	recalcPipe = make(chan uint)
 	updatePipe = make(chan uint)
+	harvestPipe = make(chan uint)
 }
 
 // GetRecalcPipe returns recalc pipe
@@ -23,6 +25,11 @@ func GetRecalcPipe() chan uint {
 // GetUpdatePipe returns update pipe
 func GetUpdatePipe() chan uint {
 	return updatePipe
+}
+
+// GetHarvestPipe returns harvest pipe
+func GetHarvestPipe() chan uint {
+	return harvestPipe
 }
 
 // RecalcProject update total for project
@@ -43,8 +50,30 @@ func RecalcProject() {
 			log.Error(err)
 			return
 		}
-		total := strategy.Recalc(project.ID)
-		dbClient.Model(&project).Update("total", total)
+		dbClient.Model(&project).Update("total", strategy.Recalc(&project))
+		strategy.CheckSearch(&project)
+	}
+}
+
+// HarvestCheck check all paid
+func HarvestCheck() {
+	defer close(recalcPipe)
+	dbClient := db.GetDbClient()
+	var project db.Project
+
+	for {
+		projectID := <-harvestPipe
+		if err := dbClient.Preload("ProjectType").First(&project, projectID).Error; gorm.IsRecordNotFoundError(err) {
+			log.Error(err)
+			return
+		}
+	
+		strategy, err := GetStrategy(project.ProjectType)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		strategy.CheckHarvest(&project)
 	}
 }
 

@@ -79,6 +79,21 @@ func (p *Project) Status() string {
     return StatusSearch
 }
 
+// Lock project and donations
+func (p *Project) Lock() {
+    dbClient := GetDbClient()
+
+    dbClient.Model(&p).Update("locked", true)
+    dbClient.Table("donations").Where("project_id = ?", p.ID).Update("locked", true)    
+}
+
+// Close project and donations
+func (p *Project) Close() {
+    dbClient := GetDbClient()
+
+    dbClient.Model(&p).Update("closed", true)
+}
+
 // Category of project
 type Category struct {
     ID    uint   `gorm:"primary_key" json:"id"`
