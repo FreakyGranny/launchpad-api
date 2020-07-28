@@ -1,4 +1,4 @@
-package api
+package handlers
 
 import (
 	"net/http"
@@ -7,10 +7,9 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
-	"github.com/jinzhu/gorm"
 
-	"github.com/FreakyGranny/launchpad-api/db"
-	"github.com/FreakyGranny/launchpad-api/misc"
+	"github.com/FreakyGranny/launchpad-api/internal/app/auth"
+	"github.com/FreakyGranny/launchpad-api/internal/app/models"
 )
 
 // TokenRequest - request for auth token
@@ -24,49 +23,58 @@ func errorResponse(message string) map[string]string {
 	}
 }
 
+// AuthHandler ...
+type AuthHandler struct {
+	UserModel models.UserImpl
+	Provider  auth.Provider
+}
+
+// NewAuthHandler ...
+func NewAuthHandler(u models.UserImpl, p auth.Provider) *AuthHandler {
+	return &AuthHandler{
+		UserModel: u,
+		Provider:  p,
+	}
+}
+
 // Login route returns token
-func Login(c echo.Context) error {
+func (h *AuthHandler) Login(c echo.Context) error {
 	request := new(TokenRequest)
 	if err := c.Bind(request); err != nil {
-		return c.JSON(http.StatusBadRequest, nil)
+		return c.JSON(http.StatusBadRequest, err)
 	}
 
-	vkClient := misc.GetVkClient()
-	data, err := vkClient.GetAccessToken(request.Code)
+	data, err := h.Provider.GetAccessToken(request.Code)
 	if err != nil {
 		log.Error(err)
 		return c.JSON(http.StatusUnauthorized, nil)
 	}
-	
-	userData, err := vkClient.GetUserData(data.UserID, data.AccessToken)	
+	user, userExist := h.UserModel.FindByID(data.UserID)
+	user.ID = data.UserID
+	user.Email = data.Email
+
+	userData, err := h.Provider.GetUserData(data.UserID, data.AccessToken)
 	if err != nil {
+		log.Error(err)
 		log.Error("unable to get user data")
 		return c.JSON(http.StatusUnauthorized, errorResponse("unable to get user data"))
 	}
+	user.Username = userData.Username
+	user.FirstName = userData.FirstName
+	user.LastName = userData.LastName
+	user.Avatar = userData.Avatar
 
-	user := db.User{
-		ID: data.UserID,
-		Email: data.Email,
-		Username: userData.Username,
-		FirstName: userData.FirstName,
-		LastName: userData.LastName,
-		Avatar: userData.Avatar,
-		IsStaff: false,
-	}
-
-	client := db.GetDbClient()
-
-	if err := client.First(&user, data.UserID).Error; gorm.IsRecordNotFoundError(err) {
-		client.Create(&user)
+	if !userExist {
+		h.UserModel.Create(&user)
 	} else {
-		client.Save(&user)
+		h.UserModel.Update(&user)
 	}
 
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
 	claims["id"] = user.ID
-	claims["admin"] = user.IsStaff
+	claims["admin"] = user.IsAdmin
 	claims["exp"] = time.Now().Add(time.Second * time.Duration(data.Expires)).Unix()
 
 	t, err := token.SignedString([]byte("secret"))
