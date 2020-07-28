@@ -10,7 +10,6 @@ type UserImpl interface {
 	FindByID(id int) (User, bool)
 	Create(*User) (*User, error)
 	Update(*User) (*User, error)
-	// FindAll() []User
 }
 
 // User model
@@ -67,9 +66,3 @@ func (r *UserRepo) Update(u *User) (*User, error) {
 
 	return u, nil
 }
-
-// func (r *UserRepo) FindAll() []User {
-// 	users := []User{}
-// 	u.db.Select(&users, "SELECT * FROM users order by id asc")
-// 	return users
-// }
