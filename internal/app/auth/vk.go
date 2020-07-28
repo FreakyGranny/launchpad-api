@@ -13,6 +13,14 @@ import (
 const apiVersion = "5.103"
 const userFields = "photo_200,screen_name"
 
+//go:generate mockgen -destination=vk_http_mock_test.go -package=auth_test . HTTPTransport
+
+// HTTPTransport ...
+type HTTPTransport interface {
+	// Do send http request
+	Do(req *http.Request) (*http.Response, error)
+}
+
 // VKAuthData VK auth data response
 type VKAuthData struct {
 	AccessToken string `json:"access_token"`
@@ -36,17 +44,14 @@ type VkUserData struct {
 
 //VkClient vk api client
 type VkClient struct {
-	HTTPClient  *http.Client
+	HTTPClient  HTTPTransport
 	AppID       string
 	AppSecret   string
 	RedirectURI string
 }
 
-func (vk *VkClient) buildAuthRequest(code string) (*http.Request, error) {
-	req, err := http.NewRequest("GET", "https://oauth.vk.com/access_token", nil)
-	if err != nil {
-		return nil, err
-	}
+func (vk *VkClient) buildAuthRequest(code string) *http.Request {
+	req, _ := http.NewRequest("GET", "https://oauth.vk.com/access_token", nil)
 
 	q := req.URL.Query()
 	q.Add("client_id", vk.AppID)
@@ -56,14 +61,11 @@ func (vk *VkClient) buildAuthRequest(code string) (*http.Request, error) {
 
 	req.URL.RawQuery = q.Encode()
 
-	return req, nil
+	return req
 }
 
-func (vk *VkClient) buildUserDataRequest(userID int, token string) (*http.Request, error) {
-	req, err := http.NewRequest("GET", "https://api.vk.com/method/users.get", nil)
-	if err != nil {
-		return nil, err
-	}
+func (vk *VkClient) buildUserDataRequest(userID int, token string) *http.Request {
+	req, _ := http.NewRequest("GET", "https://api.vk.com/method/users.get", nil)
 
 	q := req.URL.Query()
 	q.Add("fields", userFields)
@@ -73,15 +75,12 @@ func (vk *VkClient) buildUserDataRequest(userID int, token string) (*http.Reques
 
 	req.URL.RawQuery = q.Encode()
 
-	return req, nil
+	return req
 }
 
 // GetAccessToken Get VK access token
 func (vk *VkClient) GetAccessToken(code string) (*AccessData, error) {
-	req, err := vk.buildAuthRequest(code)
-	if err != nil {
-		return nil, err
-	}
+	req := vk.buildAuthRequest(code)
 
 	resp, err := vk.HTTPClient.Do(req)
 	if err != nil {
@@ -110,10 +109,7 @@ func (vk *VkClient) GetAccessToken(code string) (*AccessData, error) {
 
 // GetUserData Get VK access token
 func (vk *VkClient) GetUserData(userID int, token string) (*UserData, error) {
-	req, err := vk.buildUserDataRequest(userID, token)
-	if err != nil {
-		return nil, err
-	}
+	req := vk.buildUserDataRequest(userID, token)
 	resp, err := vk.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
