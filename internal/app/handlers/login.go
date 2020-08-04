@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/jonboulle/clockwork"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 
@@ -25,15 +26,19 @@ func errorResponse(message string) map[string]string {
 
 // AuthHandler ...
 type AuthHandler struct {
+	Secret    string
 	UserModel models.UserImpl
 	Provider  auth.Provider
+	Clock     clockwork.Clock
 }
 
 // NewAuthHandler ...
-func NewAuthHandler(u models.UserImpl, p auth.Provider) *AuthHandler {
+func NewAuthHandler(s string, u models.UserImpl, p auth.Provider, c clockwork.Clock) *AuthHandler {
 	return &AuthHandler{
+		Secret:    s,
 		UserModel: u,
 		Provider:  p,
+		Clock:     c,
 	}
 }
 
@@ -65,9 +70,9 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	user.Avatar = userData.Avatar
 
 	if !userExist {
-		h.UserModel.Create(&user)
+		h.UserModel.Create(user)
 	} else {
-		h.UserModel.Update(&user)
+		h.UserModel.Update(user)
 	}
 
 	token := jwt.New(jwt.SigningMethodHS256)
@@ -75,9 +80,9 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	claims := token.Claims.(jwt.MapClaims)
 	claims["id"] = user.ID
 	claims["admin"] = user.IsAdmin
-	claims["exp"] = time.Now().Add(time.Second * time.Duration(data.Expires)).Unix()
+	claims["exp"] = h.Clock.Now().Add(time.Second * time.Duration(data.Expires)).Unix()
 
-	t, err := token.SignedString([]byte("secret"))
+	t, err := token.SignedString([]byte(h.Secret))
 	if err != nil {
 		return err
 	}

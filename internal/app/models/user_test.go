@@ -18,7 +18,7 @@ func TestFindByID(t *testing.T) {
 	um := NewUserModel(sqlxDB)
 	u, ok := um.FindByID(1)
 
-	expect := User{
+	expect := &User{
 		ID:   1,
 		Username: "johnny86",
 		FirstName: "John",

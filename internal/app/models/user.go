@@ -5,9 +5,11 @@ import (
 	_ "github.com/lib/pq" // ...
 )
 
+//go:generate mockgen -destination=../mocks/model_user_mock.go -package=mocks . UserImpl
+
 // UserImpl ...
 type UserImpl interface {
-	FindByID(id int) (User, bool)
+	FindByID(id int) (*User, bool)
 	Create(*User) (*User, error)
 	Update(*User) (*User, error)
 }
@@ -38,9 +40,9 @@ func NewUserModel(db *sqlx.DB) *UserRepo {
 }
 
 // FindByID ...
-func (r *UserRepo) FindByID(id int) (User, bool) {
-	user := User{}
-	if err := r.db.Get(&user, "SELECT * FROM users where id = $1 limit 1", id); err != nil {
+func (r *UserRepo) FindByID(id int) (*User, bool) {
+	user := &User{}
+	if err := r.db.Get(user, "SELECT * FROM users where id = $1 limit 1", id); err != nil {
 		return user, false
 	}
 

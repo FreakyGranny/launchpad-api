@@ -16,6 +16,8 @@ type UserData struct {
 	Avatar    string
 }
 
+//go:generate mockgen -destination=../mocks/provider_mock.go -package=mocks . Provider
+
 // Provider ...
 type Provider interface {
 	// GetAccessToken access token

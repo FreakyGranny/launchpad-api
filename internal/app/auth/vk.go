@@ -13,7 +13,7 @@ import (
 const apiVersion = "5.103"
 const userFields = "photo_200,screen_name"
 
-//go:generate mockgen -destination=vk_http_mock_test.go -package=auth_test . HTTPTransport
+//go:generate mockgen -destination=../mocks/auth_vk_http_mock.go -package=mocks . HTTPTransport
 
 // HTTPTransport ...
 type HTTPTransport interface {
