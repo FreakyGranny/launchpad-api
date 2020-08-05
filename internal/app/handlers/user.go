@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/FreakyGranny/launchpad-api/internal/app/models"
-
+	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 )
 
@@ -58,21 +58,19 @@ func NewUserHandler(u models.UserImpl) *UserHandler {
 	return &UserHandler{UserModel: u}
 }
 
-// // GetCurrentUser return surrent user
-// func GetCurrentUser(c echo.Context) error {
-// 	userToken := c.Get("user").(*jwt.Token)
-// 	claims := userToken.Claims.(jwt.MapClaims)
-// 	userID := claims["id"].(float64)
+// GetCurrentUser return current user
+func (h *UserHandler) GetCurrentUser(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(jwt.MapClaims)
+	userID := claims["id"].(float64)
 
-// 	dbClient := db.GetDbClient()
-// 	var user db.User
+	user, ok := h.UserModel.FindByID(int(userID))
+	if !ok {
+		return c.JSON(http.StatusNotFound, nil)
+	}
 
-// 	if err := dbClient.First(&user, uint(userID)).Error; gorm.IsRecordNotFoundError(err) {
-// 		return c.JSON(http.StatusNotFound, nil)
-// 	}
-
-// 	return c.JSON(http.StatusOK, extendUser(user))
-// }
+	return c.JSON(http.StatusOK, user)
+}
 
 // GetUser return specific user
 func (h *UserHandler) GetUser(c echo.Context) error {

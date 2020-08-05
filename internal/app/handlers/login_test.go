@@ -38,7 +38,7 @@ func (s *LoginSuite) TearDownTest() {
 	s.mockProviderCtl.Finish()
 }
 
-func buildRequest(code string) (*http.Request, error) {
+func (s *LoginSuite) buildRequest(code string) (*http.Request, error) {
 	body, err := json.Marshal(map[string]string{"code": code})
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func buildRequest(code string) (*http.Request, error) {
 
 func (s *LoginSuite) TestWithCreateUser() {
 	expectCode := "secret_code"
-	req, err := buildRequest(expectCode)
+	req, err := s.buildRequest(expectCode)
 	if err != nil {
 		s.T().Fail()
 	}
@@ -104,7 +104,7 @@ func (s *LoginSuite) TestWithCreateUser() {
 
 func (s *LoginSuite) TestWithUpdateUser() {
 	expectCode := "secret_code"
-	req, err := buildRequest(expectCode)
+	req, err := s.buildRequest(expectCode)
 	if err != nil {
 		s.T().Fail()
 	}
@@ -160,6 +160,6 @@ func (s *LoginSuite) TestWithUpdateUser() {
 	s.Require().Equal(tokenJSON, rec.Body.String())
 }
 
-func TestProviderSuite(t *testing.T) {
+func TestLoginSuite(t *testing.T) {
 	suite.Run(t, new(LoginSuite))
 }

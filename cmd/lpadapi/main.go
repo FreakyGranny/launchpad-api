@@ -30,6 +30,8 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{AllowOrigins: []string{"*"}}))
 
+	JWTmiddleware := middleware.JWT([]byte(cfg.JWTSecret))
+
 	ha := handlers.NewAuthHandler(
 		cfg.JWTSecret,
 		models.NewUserModel(d),
@@ -43,8 +45,8 @@ func main() {
 	hu := handlers.NewUserHandler(models.NewUserModel(d))
 
 	u := e.Group("/user")
-	// u.Use(middleware.JWT([]byte("secret")))
-	// u.GET("", hu.GetUser)
+	u.Use(JWTmiddleware)
+	u.GET("", hu.GetCurrentUser)
 	u.GET("/:id", hu.GetUser)
 
 	// misc.VkInit(cfg.Vk)
