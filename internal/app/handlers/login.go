@@ -62,7 +62,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	if err != nil {
 		log.Error(err)
 		log.Error("unable to get user data")
-		return c.JSON(http.StatusUnauthorized, errorResponse("unable to get user data"))
+		return c.JSON(http.StatusInternalServerError, errorResponse("unable create/update user"))
 	}
 	user.Username = userData.Username
 	user.FirstName = userData.FirstName
@@ -70,9 +70,12 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	user.Avatar = userData.Avatar
 
 	if !userExist {
-		h.UserModel.Create(user)
+		_, err = h.UserModel.Create(user)
 	} else {
-		h.UserModel.Update(user)
+		_, err = h.UserModel.Update(user)
+	}
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, errorResponse("unable to get user data"))
 	}
 
 	token := jwt.New(jwt.SigningMethodHS256)

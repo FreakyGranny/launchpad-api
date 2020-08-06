@@ -1,17 +1,28 @@
 package handlers
 
-// import (
-// 	"net/http"
+import (
+	"net/http"
 
-// 	"github.com/labstack/echo/v4"
-// 	"github.com/FreakyGranny/launchpad-api/db"
-// )
+	"github.com/FreakyGranny/launchpad-api/internal/app/models"
+	"github.com/labstack/echo/v4"
+)
 
-// // GetCategory return list of categories
-// func GetCategory(c echo.Context) error {
-// 	dbClient := db.GetDbClient()
-// 	var categories []db.Category
-// 	dbClient.Find(&categories)
+// CategoryHandler ...
+type CategoryHandler struct {
+	CategoryModel models.CategoryImpl
+}
 
-// 	return c.JSON(http.StatusOK, categories)
-// }
+// NewCategoryHandler ...
+func NewCategoryHandler(c models.CategoryImpl) *CategoryHandler {
+	return &CategoryHandler{CategoryModel: c}
+}
+
+// GetCategories return list of categories
+func (h *CategoryHandler) GetCategories(c echo.Context) error {
+	categories, err := h.CategoryModel.GetAll()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, errorResponse("unable to get categories"))
+	}
+
+	return c.JSON(http.StatusOK, categories)
+}

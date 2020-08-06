@@ -43,24 +43,21 @@ func main() {
 	e.OPTIONS("/login", ha.Login)
 
 	hu := handlers.NewUserHandler(models.NewUserModel(d))
-
 	u := e.Group("/user")
 	u.Use(JWTmiddleware)
 	u.GET("", hu.GetCurrentUser)
 	u.GET("/:id", hu.GetUser)
 
-	// misc.VkInit(cfg.Vk)
-	// db.Init(cfg.Db)
+	hc := handlers.NewCategoryHandler(models.NewCategoryModel(d))
+	c := e.Group("/category")
+	c.Use(JWTmiddleware)
+	c.GET("", hc.GetCategories)
+
 	// misc.BackgroundInit()
 
 	// go misc.RecalcProject()
 	// go misc.UpdateUser()
 	// go misc.HarvestCheck()
-
-	// client := db.GetDbClient()
-	// defer client.Close()
-
-	// e := route.Init()
 
 	log.Fatal(e.Start(":1323"))
 }
