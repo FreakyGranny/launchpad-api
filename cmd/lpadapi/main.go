@@ -4,6 +4,7 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/labstack/gommon/log"
 
+	_ "github.com/FreakyGranny/launchpad-api/docs"
 	"github.com/FreakyGranny/launchpad-api/internal/app/auth"
 	"github.com/FreakyGranny/launchpad-api/internal/app/config"
 	"github.com/FreakyGranny/launchpad-api/internal/app/db"
@@ -11,7 +12,21 @@ import (
 	"github.com/FreakyGranny/launchpad-api/internal/app/models"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
+
+// @title Launchpad API
+// @version 1.0
+// @description This is a launchpad backend.
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @BasePath /
+
+// @securityDefinitions.apikey Bearer
+// @in header
+// @name Authorization
 
 func main() {
 	cfg := config.New()
@@ -20,6 +35,7 @@ func main() {
 	}
 
 	e := echo.New()
+	e.GET("/docs/*", echoSwagger.WrapHandler)
 
 	d, err := db.Connect(cfg.Db)
 	if err != nil {

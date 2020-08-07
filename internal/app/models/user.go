@@ -61,7 +61,7 @@ func (r *UserRepo) Create(u *User) (*User, error) {
 
 // Update ...
 func (r *UserRepo) Update(u *User) (*User, error) {
-	_, err := r.db.NamedExec("UPDATE users SET username=:username, first_name=:first_name, last_name=:last_name, avatar=:avatar, email=:email) WHERE id=:id", u)
+	_, err := r.db.NamedExec("UPDATE users SET username=:username, first_name=:first_name, last_name=:last_name, avatar=:avatar, email=:email WHERE id=:id", u)
 	if err != nil {
 		return nil, err
 	}

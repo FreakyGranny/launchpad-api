@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
-
+	"github.com/labstack/gommon/log"
 	"github.com/FreakyGranny/launchpad-api/internal/app/models"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
@@ -58,7 +58,14 @@ func NewUserHandler(u models.UserImpl) *UserHandler {
 	return &UserHandler{UserModel: u}
 }
 
-// GetCurrentUser return current user
+// GetCurrentUser godoc
+// @Summary Show a current user
+// @Description Returns user by ID from token
+// @ID get-user-by-token
+// @Produce  json
+// @Success 200 {object} models.User
+// @Security Bearer
+// @Router /user [get]
 func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(jwt.MapClaims)
@@ -72,8 +79,18 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, user)
 }
 
-// GetUser return specific user
+// GetUser godoc
+// @Summary Show a specific user
+// @Description Returns user by ID
+// @ID get-user-by-id
+// @Produce  json
+// @Param id path int true "User ID"
+// @Success 200 {object} models.User
+// @Security Bearer
+// @Router /user/{id} [get]
 func (h *UserHandler) GetUser(c echo.Context) error {
+	x := c.Request().Header.Get("Authorization")
+	log.Error(x)
 	intID, _ := strconv.Atoi(c.Param("id"))
 	user, ok := h.UserModel.FindByID(intID)
 	if !ok {

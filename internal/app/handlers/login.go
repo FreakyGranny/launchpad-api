@@ -18,6 +18,11 @@ type TokenRequest struct {
 	Code string `json:"code"`
 }
 
+// TokenResponse - response auth token
+type TokenResponse struct {
+	Token string `json:"token"`
+}
+
 func errorResponse(message string) map[string]string {
 	return map[string]string{
 		"error": message,
@@ -42,7 +47,15 @@ func NewAuthHandler(s string, u models.UserImpl, p auth.Provider, c clockwork.Cl
 	}
 }
 
-// Login route returns token
+// Login godoc
+// @Summary Returns access token
+// @Description get token for user
+// @ID get-token
+// @Accept  json
+// @Produce  json
+// @Param request body TokenRequest true "Request body"
+// @Success 200 {object} TokenResponse
+// @Router /login [post]
 func (h *AuthHandler) Login(c echo.Context) error {
 	request := new(TokenRequest)
 	if err := c.Bind(request); err != nil {
@@ -52,7 +65,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	data, err := h.Provider.GetAccessToken(request.Code)
 	if err != nil {
 		log.Error(err)
-		return c.JSON(http.StatusUnauthorized, nil)
+		return c.JSON(http.StatusUnauthorized, errorResponse("unable to get access token"))
 	}
 	user, userExist := h.UserModel.FindByID(data.UserID)
 	user.ID = data.UserID
@@ -75,6 +88,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 		_, err = h.UserModel.Update(user)
 	}
 	if err != nil {
+		log.Error(err)
 		return c.JSON(http.StatusUnauthorized, errorResponse("unable to get user data"))
 	}
 
@@ -90,7 +104,5 @@ func (h *AuthHandler) Login(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{
-		"token": t,
-	})
+	return c.JSON(http.StatusOK, TokenResponse{Token: t})
 }
