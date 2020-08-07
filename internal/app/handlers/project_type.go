@@ -1,17 +1,35 @@
 package handlers
 
-// import (
-// 	"net/http"
+import (
+	"net/http"
 
-// 	"github.com/FreakyGranny/launchpad-api/db"
-// 	"github.com/labstack/echo/v4"
-// )
+	"github.com/FreakyGranny/launchpad-api/internal/app/models"
+	"github.com/labstack/echo/v4"
+)
 
-// // GetProjectType return list of project types
-// func GetProjectType(c echo.Context) error {
-// 	dbClient := db.GetDbClient()
-// 	var projectTypes []db.ProjectType
-// 	dbClient.Find(&projectTypes)
+// ProjectTypeHandler ...
+type ProjectTypeHandler struct {
+	ProjectTypeModel models.ProjectTypeImpl
+}
 
-// 	return c.JSON(http.StatusOK, projectTypes)
-// }
+// NewProjectTypeHandler ...
+func NewProjectTypeHandler(pt models.ProjectTypeImpl) *ProjectTypeHandler {
+	return &ProjectTypeHandler{ProjectTypeModel: pt}
+}
+
+// GetProjectTypes godoc
+// @Summary return list of project types
+// @Description Returns list of categories
+// @ID get-project-types
+// @Produce json
+// @Success 200 {object} models.ProjectType
+// @Security Bearer
+// @Router /project_type [get]
+func (h *ProjectTypeHandler) GetProjectTypes(c echo.Context) error {
+	projectTypes, err := h.ProjectTypeModel.GetAll()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, errorResponse("unable to get project types"))
+	}
+
+	return c.JSON(http.StatusOK, projectTypes)
+}

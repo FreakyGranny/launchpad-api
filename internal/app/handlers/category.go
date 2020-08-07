@@ -17,7 +17,14 @@ func NewCategoryHandler(c models.CategoryImpl) *CategoryHandler {
 	return &CategoryHandler{CategoryModel: c}
 }
 
-// GetCategories return list of categories
+// GetCategories godoc
+// @Summary Returns list of categories
+// @Description Returns list of categories
+// @ID get-categories
+// @Produce  json
+// @Success 200 {object} models.Category
+// @Security Bearer
+// @Router /category [get]
 func (h *CategoryHandler) GetCategories(c echo.Context) error {
 	categories, err := h.CategoryModel.GetAll()
 	if err != nil {

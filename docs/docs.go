@@ -28,6 +28,29 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/category": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Returns list of categories",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Returns list of categories",
+                "operationId": "get-categories",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Category"
+                        }
+                    }
+                }
+            }
+        },
         "/login": {
             "post": {
                 "description": "get token for user",
@@ -55,6 +78,29 @@ var doc = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/handlers.TokenResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/project_type": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Returns list of categories",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "return list of project types",
+                "operationId": "get-project-types",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ProjectType"
                         }
                     }
                 }
@@ -129,6 +175,46 @@ var doc = `{
             "type": "object",
             "properties": {
                 "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Category": {
+            "type": "object",
+            "properties": {
+                "alias": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ProjectType": {
+            "type": "object",
+            "properties": {
+                "alias": {
+                    "type": "string"
+                },
+                "end_by_goal_gain": {
+                    "type": "boolean"
+                },
+                "goal_by_amount": {
+                    "type": "boolean"
+                },
+                "goal_by_people": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "options": {
                     "type": "string"
                 }
             }

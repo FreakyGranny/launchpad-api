@@ -10,6 +10,32 @@ definitions:
       token:
         type: string
     type: object
+  models.Category:
+    properties:
+      alias:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  models.ProjectType:
+    properties:
+      alias:
+        type: string
+      end_by_goal_gain:
+        type: boolean
+      goal_by_amount:
+        type: boolean
+      goal_by_people:
+        type: boolean
+      id:
+        type: integer
+      name:
+        type: string
+      options:
+        type: string
+    type: object
   models.User:
     properties:
       avatar:
@@ -38,6 +64,20 @@ info:
   title: Launchpad API
   version: "1.0"
 paths:
+  /category:
+    get:
+      description: Returns list of categories
+      operationId: get-categories
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Category'
+      security:
+      - Bearer: []
+      summary: Returns list of categories
   /login:
     post:
       consumes:
@@ -59,6 +99,20 @@ paths:
           schema:
             $ref: '#/definitions/handlers.TokenResponse'
       summary: Returns access token
+  /project_type:
+    get:
+      description: Returns list of categories
+      operationId: get-project-types
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ProjectType'
+      security:
+      - Bearer: []
+      summary: return list of project types
   /user:
     get:
       description: Returns user by ID from token

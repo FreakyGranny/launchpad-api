@@ -64,9 +64,9 @@ func (s *CategorySuite) TestGetAllCategories() {
 	s.Require().NoError(h.GetCategories(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
 
-	var tokenJSON = "[{\"id\":1,\"alias\":\"other\",\"name\":\"Other\"},{\"id\":2,\"alias\":\"some\",\"name\":\"Some\"}]\n"
+	var categoriesJSON = "[{\"id\":1,\"alias\":\"other\",\"name\":\"Other\"},{\"id\":2,\"alias\":\"some\",\"name\":\"Some\"}]\n"
 
-	s.Require().Equal(tokenJSON, rec.Body.String())
+	s.Require().Equal(categoriesJSON, rec.Body.String())
 }
 
 func (s *CategorySuite) TestNoCategories() {
@@ -83,9 +83,9 @@ func (s *CategorySuite) TestNoCategories() {
 	s.Require().NoError(h.GetCategories(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
 
-	var tokenJSON = "[]\n"
+	var emptyJSON = "[]\n"
 
-	s.Require().Equal(tokenJSON, rec.Body.String())
+	s.Require().Equal(emptyJSON, rec.Body.String())
 }
 
 func TestCategorySuite(t *testing.T) {

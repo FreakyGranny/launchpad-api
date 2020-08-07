@@ -69,6 +69,11 @@ func main() {
 	c.Use(JWTmiddleware)
 	c.GET("", hc.GetCategories)
 
+	hpt := handlers.NewProjectTypeHandler(models.NewProjectTypeModel(d))
+	pt := e.Group("/project_type")
+	pt.Use(JWTmiddleware)
+	pt.GET("", hpt.GetProjectTypes)
+
 	// misc.BackgroundInit()
 
 	// go misc.RecalcProject()
