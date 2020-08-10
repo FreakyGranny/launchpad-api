@@ -16,7 +16,7 @@ func sslMode(sslEnable bool) string {
 }
 
 // Connect ...
-func Connect(cfg config.PgConnection) (*sqlx.DB, error) {
+func Connect(cfg *config.PgConnection) (*sqlx.DB, error) {
 	connectString := fmt.Sprintf(
 		"host=%s port=%v user=%s dbname=%s password=%s sslmode=%s",
 		cfg.Host,

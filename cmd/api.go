@@ -1,10 +1,10 @@
-package main
+package cmd
 
 import (
 	"github.com/jonboulle/clockwork"
 	"github.com/labstack/gommon/log"
 
-	_ "github.com/FreakyGranny/launchpad-api/docs"
+	_ "github.com/FreakyGranny/launchpad-api/docs" // openAPI
 	"github.com/FreakyGranny/launchpad-api/internal/app/auth"
 	"github.com/FreakyGranny/launchpad-api/internal/app/config"
 	"github.com/FreakyGranny/launchpad-api/internal/app/db"
@@ -12,6 +12,7 @@ import (
 	"github.com/FreakyGranny/launchpad-api/internal/app/models"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/spf13/cobra"
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
@@ -28,7 +29,8 @@ import (
 // @in header
 // @name Authorization
 
-func main() {
+// API ...
+func API(cmd *cobra.Command, args []string) {
 	cfg := config.New()
 	if cfg.DebugMode {
 		log.SetLevel(log.DEBUG)
@@ -37,7 +39,7 @@ func main() {
 	e := echo.New()
 	e.GET("/docs/*", echoSwagger.WrapHandler)
 
-	d, err := db.Connect(cfg.Db)
+	d, err := db.Connect(&cfg.Db)
 	if err != nil {
 		log.Fatal(err)
 	}
