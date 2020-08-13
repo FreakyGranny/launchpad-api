@@ -39,6 +39,9 @@ var doc = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "category"
+                ],
                 "summary": "Returns list of categories",
                 "operationId": "get-categories",
                 "responses": {
@@ -59,6 +62,9 @@ var doc = `{
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "auth"
                 ],
                 "summary": "Returns access token",
                 "operationId": "get-token",
@@ -83,6 +89,41 @@ var doc = `{
                 }
             }
         },
+        "/project/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Returns project by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "project"
+                ],
+                "summary": "Show a single project",
+                "operationId": "get-project-by-id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Project ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ProjectDetailView"
+                        }
+                    }
+                }
+            }
+        },
         "/project_type": {
             "get": {
                 "security": [
@@ -90,9 +131,12 @@ var doc = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Returns list of categories",
+                "description": "Returns list of project types",
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "project type"
                 ],
                 "summary": "return list of project types",
                 "operationId": "get-project-types",
@@ -117,13 +161,16 @@ var doc = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "user"
+                ],
                 "summary": "Show a current user",
                 "operationId": "get-user-by-token",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.User"
+                            "$ref": "#/definitions/handlers.extendedUser"
                         }
                     }
                 }
@@ -140,6 +187,9 @@ var doc = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "user"
+                ],
                 "summary": "Show a specific user",
                 "operationId": "get-user-by-id",
                 "parameters": [
@@ -155,7 +205,7 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.User"
+                            "$ref": "#/definitions/handlers.extendedUser"
                         }
                     }
                 }
@@ -163,6 +213,62 @@ var doc = `{
         }
     },
     "definitions": {
+        "handlers.ProjectDetailView": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.Category"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "event_date": {
+                    "type": "string"
+                },
+                "goal_amount": {
+                    "type": "integer"
+                },
+                "goal_people": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "image_link": {
+                    "type": "string"
+                },
+                "instructions": {
+                    "type": "string"
+                },
+                "owner": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.User"
+                },
+                "percent": {
+                    "type": "integer"
+                },
+                "project_type": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.ProjectType"
+                },
+                "release_date": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "subtitle": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "handlers.TokenRequest": {
             "type": "object",
             "properties": {
@@ -176,6 +282,52 @@ var doc = `{
             "properties": {
                 "token": {
                     "type": "string"
+                }
+            }
+        },
+        "handlers.extendedUser": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_staff": {
+                    "type": "boolean"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "participation": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.participation"
+                    }
+                },
+                "project_count": {
+                    "type": "integer"
+                },
+                "success_rate": {
+                    "type": "number"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.participation": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
                 }
             }
         },
@@ -215,7 +367,10 @@ var doc = `{
                     "type": "string"
                 },
                 "options": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -230,9 +385,6 @@ var doc = `{
                 },
                 "id": {
                     "type": "integer"
-                },
-                "is_admin": {
-                    "type": "boolean"
                 },
                 "last_name": {
                     "type": "string"

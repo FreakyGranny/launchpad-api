@@ -15,15 +15,16 @@ type UserImpl interface {
 
 // User model
 type User struct {
-	ID           int     `json:"id"`
-	Username     string  `json:"username"`
-	FirstName    string  `json:"first_name"`
-	LastName     string  `json:"last_name"`
-	Avatar       string  `json:"avatar"`
-	Email        string  `json:"-"`
-	IsAdmin      bool    `json:"is_admin"`
-	ProjectCount int     `json:"project_count"`
-	SuccessRate  float32 `json:"success_rate"`
+	tableName    struct{} `pg:"users,alias:u"`
+	ID           int      `json:"id"`
+	Username     string   `json:"username"`
+	FirstName    string   `json:"first_name"`
+	LastName     string   `json:"last_name"`
+	Avatar       string   `json:"avatar"`
+	Email        string   `json:"-"`
+	IsAdmin      bool     `json:"-"`
+	ProjectCount int      `json:"project_count"`
+	SuccessRate  float32  `json:"success_rate"`
 }
 
 // UserRepo ...

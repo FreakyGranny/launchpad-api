@@ -42,7 +42,7 @@ func (s *ProjectTypeSuite) TestGetAllProjectTypes() {
 	e := echo.New()
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.SetPath("/category")
+	c.SetPath("/project_type")
 
 	h := NewProjectTypeHandler(s.mockProjectType)
 

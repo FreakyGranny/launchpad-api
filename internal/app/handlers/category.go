@@ -20,6 +20,7 @@ func NewCategoryHandler(c models.CategoryImpl) *CategoryHandler {
 // GetCategories godoc
 // @Summary Returns list of categories
 // @Description Returns list of categories
+// @Tags category
 // @ID get-categories
 // @Produce  json
 // @Success 200 {object} models.Category

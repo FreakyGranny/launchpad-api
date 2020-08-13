@@ -14,9 +14,10 @@ type CategoryImpl interface {
 
 // Category of project
 type Category struct {
-	ID    int   `json:"id"`
-	Alias string `json:"alias"`
-	Name  string `json:"name"`
+	tableName struct{} `pg:"categories,alias:c"`
+	ID        int      `json:"id"`
+	Alias     string   `json:"alias"`
+	Name      string   `json:"name"`
 }
 
 // CategoryRepo ...

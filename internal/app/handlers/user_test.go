@@ -63,7 +63,7 @@ func (s *UserSuite) TestGetUserByID() {
 	s.Require().NoError(h.GetUser(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
 
-	var tokenJSON = "{\"id\":1,\"username\":\"X\",\"first_name\":\"Y\",\"last_name\":\"Z\",\"avatar\":\"A\",\"is_admin\":false,\"project_count\":0,\"success_rate\":0}\n"
+	var tokenJSON = "{\"id\":1,\"username\":\"X\",\"first_name\":\"Y\",\"last_name\":\"Z\",\"avatar\":\"A\",\"project_count\":0,\"success_rate\":0}\n"
 
 	s.Require().Equal(tokenJSON, rec.Body.String())
 }
@@ -116,7 +116,7 @@ func (s *UserSuite) TestGetCurrentUser() {
 	s.Require().NoError(h.GetCurrentUser(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
 
-	var tokenJSON = "{\"id\":1,\"username\":\"X\",\"first_name\":\"Y\",\"last_name\":\"Z\",\"avatar\":\"A\",\"is_admin\":false,\"project_count\":0,\"success_rate\":0}\n"
+	var tokenJSON = "{\"id\":1,\"username\":\"X\",\"first_name\":\"Y\",\"last_name\":\"Z\",\"avatar\":\"A\",\"project_count\":0,\"success_rate\":0}\n"
 
 	s.Require().Equal(tokenJSON, rec.Body.String())
 }

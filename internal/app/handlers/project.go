@@ -1,13 +1,18 @@
 package handlers
 
-// import (
-// 	"net/http"
-// 	"strconv"
-// 	"time"
+import (
+	"net/http"
+	"strconv"
 
+	// 	"time"
+
+	"github.com/FreakyGranny/launchpad-api/internal/app/models"
+	"github.com/labstack/echo/v4"
+)
+
+// import (
 // 	// "github.com/labstack/gommon/log"
 // 	"github.com/dgrijalva/jwt-go"
-// 	"github.com/jinzhu/gorm"
 // 	"github.com/labstack/echo/v4"
 // 	"github.com/vcraescu/go-paginator"
 // 	"github.com/vcraescu/go-paginator/adapter"
@@ -16,52 +21,52 @@ package handlers
 // 	"github.com/FreakyGranny/launchpad-api/misc"
 // )
 
-// const (
-// 	dateLayout = "2006-01-02"
-// 	dateTimeLayout = "2006-01-02 15:04:05"
-// )
+const (
+	dateLayout     = "2006-01-02"
+	dateTimeLayout = "2006-01-02 15:04:05"
+)
 
-// // ProjectListResponse paginated projects
-// type ProjectListResponse struct {
-// 	Results  []ProjectListView  `json:"results"`
-// 	NextPage int                `json:"next"`
-// 	HasNext  bool               `json:"has_next"`
-// }
+// ProjectListResponse paginated projects
+type ProjectListResponse struct {
+	Results  []ProjectListView `json:"results"`
+	NextPage int               `json:"next"`
+	HasNext  bool              `json:"has_next"`
+}
 
-// // ProjectListView light project entry
-// type ProjectListView struct {
-// 	ID          uint           `json:"id"`
-// 	Title       string         `json:"title"`
-// 	SubTitle    string         `json:"subtitle"`
-// 	Status      string         `json:"status"`
-// 	ReleaseDate string         `json:"release_date"`
-// 	EventDate   *string        `json:"event_date"`
-// 	ImageLink   string         `json:"image_link"`
-// 	Total       uint           `json:"total"`
-// 	Percent     uint           `json:"percent"`
-// 	Category    db.Category    `json:"category"`
-// 	ProjectType db.ProjectType `json:"project_type"`
-// }
+// ProjectListView light project entry
+type ProjectListView struct {
+	ID          int                `json:"id"`
+	Title       string             `json:"title"`
+	SubTitle    string             `json:"subtitle"`
+	Status      string             `json:"status"`
+	ReleaseDate string             `json:"release_date"`
+	EventDate   *string            `json:"event_date"`
+	ImageLink   string             `json:"image_link"`
+	Total       int                `json:"total"`
+	Percent     int                `json:"percent"`
+	Category    models.Category    `json:"category"`
+	ProjectType models.ProjectType `json:"project_type"`
+}
 
-// // ProjectDetailView light project entry
-// type ProjectDetailView struct {
-// 	ID            uint           `json:"id"`
-// 	Title         string         `json:"title"`
-// 	SubTitle      string         `json:"subtitle"`
-// 	Status        string         `json:"status"`
-// 	ReleaseDate   string         `json:"release_date"`
-// 	EventDate     *string        `json:"event_date"`
-// 	ImageLink     string         `json:"image_link"`
-// 	Total         uint           `json:"total"`
-// 	Percent       uint           `json:"percent"`
-// 	Category      db.Category    `json:"category"`
-// 	ProjectType   db.ProjectType `json:"project_type"`
-//     GoalPeople    uint           `json:"goal_people"`
-//     GoalAmount    uint           `json:"goal_amount"`
-//     Description   string         `json:"description"`
-//     Instructions  string         `json:"instructions"`
-//     Owner         db.User        `json:"owner"`
-// }
+// ProjectDetailView light project entry
+type ProjectDetailView struct {
+	ID           int                `json:"id"`
+	Title        string             `json:"title"`
+	SubTitle     string             `json:"subtitle"`
+	Status       string             `json:"status"`
+	ReleaseDate  string             `json:"release_date"`
+	EventDate    *string            `json:"event_date"`
+	ImageLink    string             `json:"image_link"`
+	Total        int                `json:"total"`
+	Percent      int                `json:"percent"`
+	Category     models.Category    `json:"category"`
+	ProjectType  models.ProjectType `json:"project_type"`
+	GoalPeople   int                `json:"goal_people"`
+	GoalAmount   int                `json:"goal_amount"`
+	Description  string             `json:"description"`
+	Instructions string             `json:"instructions"`
+	Owner        models.User        `json:"owner"`
+}
 
 // type projectRequest struct {
 // 	Title        string `json:"title"`
@@ -78,6 +83,15 @@ package handlers
 // 	Published    bool   `json:"published,omitempty"`
 // }
 
+// ProjectHandler ...
+type ProjectHandler struct {
+	ProjectModel models.ProjectImpl
+}
+
+// NewProjectHandler ...
+func NewProjectHandler(m models.ProjectImpl) *ProjectHandler {
+	return &ProjectHandler{ProjectModel: m}
+}
 
 // func filterQuery(userID int, filter string, dbClient *gorm.DB) *gorm.DB {
 // 	query := dbClient
@@ -92,7 +106,7 @@ package handlers
 // 	if filter == "contributed" {
 // 		query = query.Where("id IN (?)", dbClient.Table("donations").Select("project_id").Where("user_id = ?", userID).SubQuery())
 // 	}
-	
+
 // 	return query
 // }
 
@@ -139,12 +153,12 @@ package handlers
 // 	categoryInt, _ := strconv.Atoi(categoryParam)
 // 	typeInt, _ := strconv.Atoi(typeParam)
 // 	userInt, _ := strconv.Atoi(userParam)
-  
+
 // 	client := db.GetDbClient()
 // 	var projects []db.Project
 
-// 	allRows := client.Preload("ProjectType").Preload("Category").Model(db.Project{})  
-  
+// 	allRows := client.Preload("ProjectType").Preload("Category").Model(db.Project{})
+
 // 	allRows = filterQueryByCategory(categoryInt, allRows)
 // 	allRows = filterQueryByProjectType(typeInt, allRows)
 // 	allRows = filterQueryByUserID(userInt, allRows)
@@ -152,12 +166,12 @@ package handlers
 
 // 	paginated := paginator.New(adapter.NewGORMAdapter(allRows.Order("id desc")), pageSizeInt)
 // 	paginated.SetPage(pageInt)
-  
+
 // 	if err := paginated.Results(&projects); err != nil {
 // 			  panic(err)
 // 			}
 // 	next, _ := paginated.NextPage()
-	
+
 // 	projectListEntries := make([]ProjectListView, 0)
 
 // 	for _, project := range(projects) {
@@ -177,7 +191,7 @@ package handlers
 // 			Category: project.Category,
 // 			ProjectType: project.ProjectType,
 // 		}
-		
+
 // 		if project.EventDate.IsZero() {
 // 			plv.EventDate = nil
 // 		} else {
@@ -195,49 +209,56 @@ package handlers
 // 	})
 // }
 
-// // GetSingleProject return single project
-// func GetSingleProject(c echo.Context) error {
-// 	projectParam := c.Param("id")
-// 	projectID, _ := strconv.Atoi(projectParam)
-  
-// 	dbClient := db.GetDbClient()
-// 	var project db.Project
+// GetSingleProject godoc
+// @Summary Show a single project
+// @Description Returns project by ID
+// @Tags project
+// @ID get-project-by-id
+// @Produce  json
+// @Param id path int true "Project ID"
+// @Success 200 {object} ProjectDetailView
+// @Security Bearer
+// @Router /project/{id} [get]
+func (h *ProjectHandler) GetSingleProject(c echo.Context) error {
+	projectID, _ := strconv.Atoi(c.Param("id"))
 
-// 	if err := dbClient.Preload("ProjectType").Preload("Category").Preload("Owner").First(&project, projectID).Error; gorm.IsRecordNotFoundError(err) {
-// 		return c.JSON(http.StatusNotFound, nil)
-// 	}
-// 	strategy, err := misc.GetStrategy(project.ProjectType)
-// 	if err != nil {
-// 		return c.JSON(http.StatusInternalServerError, nil)
-// 	}
+	project, ok := h.ProjectModel.Get(projectID)
+	if !ok {
+		return c.JSON(http.StatusNotFound, nil)
+	}
 
-// 	projectResponse := ProjectDetailView{
-// 		ID: project.ID,
-// 		Title: project.Title,
-// 		SubTitle: project.SubTitle,
-// 		Status: project.Status(),
-// 		ReleaseDate: project.ReleaseDate.Format(dateLayout),
-// 		ImageLink: project.ImageLink,
-// 		Total: project.Total,
-// 		Percent: strategy.Percent(&project),
-// 		Category: project.Category,
-// 		ProjectType: project.ProjectType,
-// 		GoalPeople: project.GoalPeople,
-// 		GoalAmount: project.GoalAmount,
-// 		Description: project.Description,
-// 		Instructions: project.Instructions,
-// 		Owner: project.Owner,
-// 	}
+	// strategy, err := misc.GetStrategy(project.ProjectType)
+	// if err != nil {
+	// 	return c.JSON(http.StatusInternalServerError, nil)
+	// }
 
-// 	if project.EventDate.IsZero() {
-// 		projectResponse.EventDate = nil
-// 	} else {
-// 		ed := project.EventDate.Format(dateTimeLayout)
-// 		projectResponse.EventDate = &ed
-// 	}
+	projectResponse := ProjectDetailView{
+		ID:       project.ID,
+		Title:    project.Title,
+		SubTitle: project.SubTitle,
+		// Status:       project.Status(),
+		ReleaseDate: project.ReleaseDate.Format(dateLayout),
+		ImageLink:   project.ImageLink,
+		Total:       project.Total,
+		// Percent:      strategy.Percent(&project),
+		Category:     project.Category,
+		ProjectType:  project.ProjectType,
+		GoalPeople:   project.GoalPeople,
+		GoalAmount:   project.GoalAmount,
+		Description:  project.Description,
+		Instructions: project.Instructions,
+		Owner:        project.Owner,
+	}
 
-// 	return c.JSON(http.StatusOK, projectResponse)
-// }
+	if project.EventDate.IsZero() {
+		projectResponse.EventDate = nil
+	} else {
+		ed := project.EventDate.Format(dateTimeLayout)
+		projectResponse.EventDate = &ed
+	}
+
+	return c.JSON(http.StatusOK, projectResponse)
+}
 
 // // CreateProject create new project
 // func CreateProject(c echo.Context) error {
@@ -293,7 +314,7 @@ package handlers
 
 // 	projectParam := c.Param("id")
 // 	projectID, _ := strconv.Atoi(projectParam)
-  
+
 // 	dbClient := db.GetDbClient()
 // 	var project db.Project
 
@@ -381,7 +402,7 @@ package handlers
 
 // 	projectParam := c.Param("id")
 // 	projectID, _ := strconv.Atoi(projectParam)
-  
+
 // 	dbClient := db.GetDbClient()
 // 	var project db.Project
 

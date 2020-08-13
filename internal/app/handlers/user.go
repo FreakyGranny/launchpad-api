@@ -3,27 +3,28 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+
 	"github.com/FreakyGranny/launchpad-api/internal/app/models"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 )
 
-// type extendedUser struct {
-//     ID            uint            `json:"id"`
-//     Username      string          `json:"username"`
-//     FirstName     string          `json:"first_name"`
-//     LastName      string          `json:"last_name"`
-//     Avatar        string          `json:"avatar"`
-//     IsStaff       bool            `json:"is_staff"`
-//     ProjectCount  uint            `json:"project_count"`
-// 	SuccessRate   float32         `json:"success_rate"`
-// 	Participation *[]participation `json:"participation"`
-// }
+type extendedUser struct {
+	ID            uint             `json:"id"`
+	Username      string           `json:"username"`
+	FirstName     string           `json:"first_name"`
+	LastName      string           `json:"last_name"`
+	Avatar        string           `json:"avatar"`
+	IsStaff       bool             `json:"is_staff"`
+	ProjectCount  uint             `json:"project_count"`
+	SuccessRate   float32          `json:"success_rate"`
+	Participation *[]participation `json:"participation"`
+}
 
-// type participation struct {
-// 	Cnt           uint `json:"count"`
-// 	ProjectTypeID uint `json:"id"`
-// }
+type participation struct {
+	Cnt           uint `json:"count"`
+	ProjectTypeID uint `json:"id"`
+}
 
 // func extendUser(user db.User) extendedUser {
 // 	dbClient := db.GetDbClient()
@@ -60,9 +61,10 @@ func NewUserHandler(u models.UserImpl) *UserHandler {
 // GetCurrentUser godoc
 // @Summary Show a current user
 // @Description Returns user by ID from token
+// @Tags user
 // @ID get-user-by-token
 // @Produce  json
-// @Success 200 {object} models.User
+// @Success 200 {object} extendedUser
 // @Security Bearer
 // @Router /user [get]
 func (h *UserHandler) GetCurrentUser(c echo.Context) error {
@@ -81,10 +83,11 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 // GetUser godoc
 // @Summary Show a specific user
 // @Description Returns user by ID
+// @Tags user
 // @ID get-user-by-id
 // @Produce  json
 // @Param id path int true "User ID"
-// @Success 200 {object} models.User
+// @Success 200 {object} extendedUser
 // @Security Bearer
 // @Router /user/{id} [get]
 func (h *UserHandler) GetUser(c echo.Context) error {

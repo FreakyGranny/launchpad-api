@@ -13,6 +13,7 @@ type ProjectTypeImpl interface {
 
 // ProjectType of project
 type ProjectType struct {
+	tableName     struct{} `pg:"project_types,alias:pt"`
 	ID            uint     `json:"id"`
 	Alias         string   `json:"alias"`
 	Name          string   `json:"name"`

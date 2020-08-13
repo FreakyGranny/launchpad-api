@@ -50,6 +50,7 @@ func NewAuthHandler(s string, u models.UserImpl, p auth.Provider, c clockwork.Cl
 // Login godoc
 // @Summary Returns access token
 // @Description get token for user
+// @Tags auth
 // @ID get-token
 // @Accept  json
 // @Produce  json

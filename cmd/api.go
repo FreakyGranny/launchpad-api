@@ -77,6 +77,15 @@ func API(cmd *cobra.Command, args []string) {
 	pt.Use(JWTmiddleware)
 	pt.GET("", hpt.GetProjectTypes)
 
+	hp := handlers.NewProjectHandler(models.NewProjectModel(d))
+	p := e.Group("/project")
+	// p.Use(JWTmiddleware)
+	// p.GET("", api.GetProjects)
+	// p.POST("", api.CreateProject)
+	p.GET("/:id", hp.GetSingleProject)
+	// p.PATCH("/:id", api.UpdateProject)
+	// p.DELETE("/:id", api.DeleteProject)
+
 	// misc.BackgroundInit()
 
 	// go misc.RecalcProject()

@@ -19,7 +19,8 @@ func NewProjectTypeHandler(pt models.ProjectTypeImpl) *ProjectTypeHandler {
 
 // GetProjectTypes godoc
 // @Summary return list of project types
-// @Description Returns list of categories
+// @Description Returns list of project types
+// @Tags project type
 // @ID get-project-types
 // @Produce json
 // @Success 200 {object} models.ProjectType
