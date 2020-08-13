@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 	"strconv"
-	"github.com/labstack/gommon/log"
 	"github.com/FreakyGranny/launchpad-api/internal/app/models"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
@@ -89,8 +88,6 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 // @Security Bearer
 // @Router /user/{id} [get]
 func (h *UserHandler) GetUser(c echo.Context) error {
-	x := c.Request().Header.Get("Authorization")
-	log.Error(x)
 	intID, _ := strconv.Atoi(c.Param("id"))
 	user, ok := h.UserModel.FindByID(intID)
 	if !ok {

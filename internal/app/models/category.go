@@ -1,8 +1,7 @@
 package models
 
 import (
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq" // ...
+	"github.com/go-pg/pg/v10"
 )
 
 //go:generate mockgen -destination=../mocks/model_category_mock.go -package=mocks . CategoryImpl
@@ -15,18 +14,18 @@ type CategoryImpl interface {
 
 // Category of project
 type Category struct {
-	ID    uint   `db:"id" json:"id"`
-	Alias string `db:"alias" json:"alias"`
-	Name  string `db:"name" json:"name"`
+	ID    int   `json:"id"`
+	Alias string `json:"alias"`
+	Name  string `json:"name"`
 }
 
 // CategoryRepo ...
 type CategoryRepo struct {
-	db *sqlx.DB
+	db *pg.DB
 }
 
 // NewCategoryModel ...
-func NewCategoryModel(db *sqlx.DB) *CategoryRepo {
+func NewCategoryModel(db *pg.DB) *CategoryRepo {
 	return &CategoryRepo{
 		db: db,
 	}
@@ -35,7 +34,8 @@ func NewCategoryModel(db *sqlx.DB) *CategoryRepo {
 // Get ...
 func (r *CategoryRepo) Get(id int) (*Category, bool) {
 	category := &Category{}
-	if err := r.db.Get(category, "SELECT * FROM category where id = $1 limit 1", id); err != nil {
+	err := r.db.Model(category).Where("id = ?", id).Select()
+	if err != nil {
 		return category, false
 	}
 
@@ -45,7 +45,7 @@ func (r *CategoryRepo) Get(id int) (*Category, bool) {
 // GetAll ...
 func (r *CategoryRepo) GetAll() ([]Category, error) {
 	categories := []Category{}
-	err := r.db.Select(&categories, "SELECT * FROM categories order by id asc")
+	err := r.db.Model(&categories).Select()
 	if err != nil {
 		return categories, err
 	}

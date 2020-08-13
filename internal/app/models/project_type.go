@@ -1,8 +1,7 @@
 package models
 
 import (
-	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
+	"github.com/go-pg/pg/v10"
 )
 
 //go:generate mockgen -destination=../mocks/model_p_type_mock.go -package=mocks . ProjectTypeImpl
@@ -14,22 +13,22 @@ type ProjectTypeImpl interface {
 
 // ProjectType of project
 type ProjectType struct {
-	ID            uint           `db:"id" json:"id"`
-	Alias         string         `db:"alias" json:"alias"`
-	Name          string         `db:"name" json:"name"`
-	Options       pq.StringArray `db:"options" json:"options"`
-	GoalByPeople  bool           `db:"goal_by_people" json:"goal_by_people"`
-	GoalByAmount  bool           `db:"goal_by_amount" json:"goal_by_amount"`
-	EndByGoalGain bool           `db:"end_by_goal_gain" json:"end_by_goal_gain"`
+	ID            uint     `json:"id"`
+	Alias         string   `json:"alias"`
+	Name          string   `json:"name"`
+	Options       []string `pg:",array" json:"options"`
+	GoalByPeople  bool     `json:"goal_by_people"`
+	GoalByAmount  bool     `json:"goal_by_amount"`
+	EndByGoalGain bool     `json:"end_by_goal_gain"`
 }
 
 // ProjectTypeRepo ...
 type ProjectTypeRepo struct {
-	db *sqlx.DB
+	db *pg.DB
 }
 
 // NewProjectTypeModel ...
-func NewProjectTypeModel(db *sqlx.DB) *ProjectTypeRepo {
+func NewProjectTypeModel(db *pg.DB) *ProjectTypeRepo {
 	return &ProjectTypeRepo{
 		db: db,
 	}
@@ -38,7 +37,7 @@ func NewProjectTypeModel(db *sqlx.DB) *ProjectTypeRepo {
 // GetAll ...
 func (r *ProjectTypeRepo) GetAll() ([]ProjectType, error) {
 	projectTypes := []ProjectType{}
-	err := r.db.Select(&projectTypes, "SELECT * FROM project_types order by id asc")
+	err := r.db.Model(&projectTypes).Select()
 	if err != nil {
 		return projectTypes, err
 	}

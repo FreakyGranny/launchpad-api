@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/FreakyGranny/launchpad-api/internal/app/config"
-	"github.com/jmoiron/sqlx"
+	"github.com/go-pg/pg/v10"
 )
 
 func sslMode(sslEnable bool) string {
@@ -16,18 +16,14 @@ func sslMode(sslEnable bool) string {
 }
 
 // Connect ...
-func Connect(cfg *config.PgConnection) (*sqlx.DB, error) {
-	connectString := fmt.Sprintf(
-		"host=%s port=%v user=%s dbname=%s password=%s sslmode=%s",
-		cfg.Host,
-		cfg.Port,
-		cfg.Username,
-		cfg.DbName,
-		cfg.Password,
-		sslMode(cfg.SslEnable),
-	)
-	db, err := sqlx.Connect("postgres", connectString)
-	if err != nil {
+func Connect(cfg *config.PgConnection) (*pg.DB, error) {
+	db := pg.Connect(&pg.Options{
+		Addr:     fmt.Sprintf("%s:%v", cfg.Host, cfg.Port),
+		User:     cfg.Username,
+		Password: cfg.Password,
+		Database: cfg.DbName,
+	})
+	if err := db.Ping(db.Context()); err != nil {
 		return nil, err
 	}
 	return db, nil

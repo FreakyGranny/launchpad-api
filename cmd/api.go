@@ -43,6 +43,7 @@ func API(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer d.Close()
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -83,4 +84,14 @@ func API(cmd *cobra.Command, args []string) {
 	// go misc.HarvestCheck()
 
 	log.Fatal(e.Start(":1323"))
+}
+
+// NewAPICmd return api command
+func NewAPICmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "api",
+		Short: "run api",
+		Long:  "starts launchpad API server",
+		Run:   API,
+	}
 }
