@@ -86,6 +86,15 @@ func API(cmd *cobra.Command, args []string) {
 	// p.PATCH("/:id", api.UpdateProject)
 	// p.DELETE("/:id", api.DeleteProject)
 
+	hd := handlers.NewDonationHandler(models.NewDonationModel(d))
+	dg := e.Group("/donation")
+	// p.Use(JWTmiddleware)
+	dg.GET("", hd.GetUserDonations)
+	dg.GET("/project/:id", hd.GetProjectDonations)
+	// d.POST("", api.CreateDonation)
+	// d.DELETE("/:id", api.DeleteDonation)
+	// d.PATCH("/:id", api.UpdateDonation)
+
 	// misc.BackgroundInit()
 
 	// go misc.RecalcProject()

@@ -4,7 +4,7 @@ import (
 	"github.com/go-pg/pg/v10"
 )
 
-//go:generate mockgen -destination=../mocks/model_user_mock.go -package=mocks . UserImpl
+//go:generate mockgen -source=$GOFILE -destination=../mocks/model_user_mock.go -package=mocks . UserImpl
 
 // UserImpl ...
 type UserImpl interface {
@@ -15,7 +15,7 @@ type UserImpl interface {
 
 // User model
 type User struct {
-	tableName    struct{} `pg:"users,alias:u"`
+	tableName    struct{} `pg:"users,alias:u"` //nolint
 	ID           int      `json:"id"`
 	Username     string   `json:"username"`
 	FirstName    string   `json:"first_name"`

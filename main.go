@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/FreakyGranny/launchpad-api/cmd"
 	"github.com/spf13/cobra"
 )
@@ -10,5 +12,7 @@ import (
 func main() {
 	var rootCmd = &cobra.Command{Use: "lpad"}
 	rootCmd.AddCommand(cmd.NewAPICmd(), cmd.NewMigrateCmd())
-	rootCmd.Execute()
+	if rootCmd.Execute() != nil {
+		os.Exit(1)
+	}
 }

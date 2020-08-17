@@ -1,16 +1,22 @@
 package handlers
 
-// import (
-// 	"net/http"
-// 	"strconv"
+import (
+	"net/http"
+	"strconv"
 
-// 	// "github.com/labstack/gommon/log"
-// 	"github.com/jinzhu/gorm"
-// 	"github.com/dgrijalva/jwt-go"
-// 	"github.com/labstack/echo/v4"
-// 	"github.com/FreakyGranny/launchpad-api/db"
-// 	"github.com/FreakyGranny/launchpad-api/misc"
-// )
+	"github.com/FreakyGranny/launchpad-api/internal/app/models"
+	"github.com/labstack/echo/v4"
+)
+
+// DonationHandler ...
+type DonationHandler struct {
+	DonationModel models.DonationImpl
+}
+
+// NewDonationHandler ...
+func NewDonationHandler(m models.DonationImpl) *DonationHandler {
+	return &DonationHandler{DonationModel: m}
+}
 
 // type createRequest struct {
 // 	ProjectID uint `json:"project"`
@@ -22,44 +28,66 @@ package handlers
 // 	Payment uint `json:"payment,omitempty"`
 // }
 
-// // ProjectDonation for project donations response
-// type ProjectDonation struct {
-//     ID        uint    `json:"id"`
-//     User      db.User `json:"user"`
-//     Locked    bool    `json:"locked"`
-//     Paid      bool    `json:"paid"`
-// }
+// ProjectDonation for project donations response
+type ProjectDonation struct {
+	ID     int         `json:"id"`
+	User   models.User `json:"user"`
+	Locked bool        `json:"locked"`
+	Paid   bool        `json:"paid"`
+}
 
-// // GetDonation return list of users
-// func GetDonation(c echo.Context) error {
-// 	projectParam := c.QueryParam("project_id")
-// 	projectID, _ := strconv.Atoi(projectParam)
+// GetUserDonations godoc
+// @Summary Returns list of user's donations
+// @Description Returns list of user's donations
+// @Tags donation
+// @ID get-user-donations
+// @Produce  json
+// @Success 200 {object} models.Donation
+// @Security Bearer
+// @Router /donation [get]
+func (h *DonationHandler) GetUserDonations(c echo.Context) error {
+	userID, err := getUserIDFromToken(c.Get("user"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err)
+	}
+	donations, err := h.DonationModel.GetAllByUser(userID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
 
-// 	dbClient := db.GetDbClient()
-// 	var donations []db.Donation
-	
-// 	if projectID != 0 {	
-// 		dbClient.Preload("User").Where("project_id = ?", projectID).Find(&donations)
-// 		projectDonations := make([]ProjectDonation, 0)
+	return c.JSON(http.StatusOK, donations)
+}
 
-// 		for _, donation := range(donations) {
-// 			projectDonations = append(projectDonations, ProjectDonation{
-// 				ID: donation.ID,
-// 				User: donation.User,
-// 				Locked: donation.Locked,
-// 				Paid: donation.Paid,
-// 			})
-// 		}
-// 		return c.JSON(http.StatusOK, projectDonations)
-// 	}
-// 	userToken := c.Get("user").(*jwt.Token)
-// 	claims := userToken.Claims.(jwt.MapClaims)
-// 	userID := claims["id"].(float64)
+// GetProjectDonations godoc
+// @Summary Returns list of project donations
+// @Description Returns list of project donations
+// @Tags donation
+// @ID get-project-donations
+// @Produce  json
+// @Success 200 {object} ProjectDonation
+// @Security Bearer
+// @Router /donation/project [get]
+func (h *DonationHandler) GetProjectDonations(c echo.Context) error {
+	intID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, errorResponse("wrong ID"))
+	}
+	donations, err := h.DonationModel.GetAllByProject(intID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+	projectDonations := make([]ProjectDonation, 0, len(donations))
 
-// 	dbClient.Where("user_id = ?", int(userID)).Find(&donations)
-
-// 	return c.JSON(http.StatusOK, donations)
-// }
+	for _, donation := range donations {
+		projectDonations = append(projectDonations, ProjectDonation{
+			ID:     donation.ID,
+			User:   donation.User,
+			Locked: donation.Locked,
+			Paid:   donation.Paid,
+		})
+	}
+	return c.JSON(http.StatusOK, projectDonations)
+}
 
 // // CreateDonation return list of users
 // func CreateDonation(c echo.Context) error {
@@ -69,7 +97,7 @@ package handlers
 // 	}
 // 	dbClient := db.GetDbClient()
 // 	var project db.Project
-	
+
 // 	if err := dbClient.First(&project, request.ProjectID).Error; gorm.IsRecordNotFoundError(err) {
 // 		return c.JSON(http.StatusBadRequest, nil)
 // 	}
@@ -105,7 +133,7 @@ package handlers
 
 // 	dbClient := db.GetDbClient()
 // 	var donation db.Donation
-	
+
 // 	if err := dbClient.Preload("User").First(&donation, donationID).Error; gorm.IsRecordNotFoundError(err) {
 // 		return c.JSON(http.StatusNotFound, nil)
 // 	}
@@ -135,7 +163,7 @@ package handlers
 
 // 	dbClient := db.GetDbClient()
 // 	var donation db.Donation
-	
+
 // 	if err := dbClient.Preload("Project").Preload("User").First(&donation, donationID).Error; gorm.IsRecordNotFoundError(err) {
 // 		return c.JSON(http.StatusNotFound, nil)
 // 	}
@@ -155,7 +183,7 @@ package handlers
 // 		dbClient.Model(&donation).Update("payment", request.Payment)
 // 		ch := misc.GetRecalcPipe()
 // 		ch <- donation.ProjectID
-		
+
 // 		return c.JSON(http.StatusOK, donation)
 // 	}
 

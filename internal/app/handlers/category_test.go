@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -64,9 +65,9 @@ func (s *CategorySuite) TestGetAllCategories() {
 	s.Require().NoError(h.GetCategories(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
 
-	var categoriesJSON = "[{\"id\":1,\"alias\":\"other\",\"name\":\"Other\"},{\"id\":2,\"alias\":\"some\",\"name\":\"Some\"}]\n"
+	var categoriesJSON = `[{"id":1,"alias":"other","name":"Other"},{"id":2,"alias":"some","name":"Some"}]`
 
-	s.Require().Equal(categoriesJSON, rec.Body.String())
+	s.Require().Equal(categoriesJSON, strings.Trim(rec.Body.String(), "\n"))
 }
 
 func (s *CategorySuite) TestNoCategories() {

@@ -4,7 +4,7 @@ import (
 	"github.com/go-pg/pg/v10"
 )
 
-//go:generate mockgen -destination=../mocks/model_category_mock.go -package=mocks . CategoryImpl
+//go:generate mockgen -source=$GOFILE -destination=../mocks/model_category_mock.go -package=mocks . CategoryImpl
 
 // CategoryImpl ...
 type CategoryImpl interface {
@@ -14,7 +14,7 @@ type CategoryImpl interface {
 
 // Category of project
 type Category struct {
-	tableName struct{} `pg:"categories,alias:c"`
+	tableName struct{} `pg:"categories,alias:c"` //nolint
 	ID        int      `json:"id"`
 	Alias     string   `json:"alias"`
 	Name      string   `json:"name"`

@@ -54,6 +54,58 @@ var doc = `{
                 }
             }
         },
+        "/donation": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Returns list of user's donations",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "donation"
+                ],
+                "summary": "Returns list of user's donations",
+                "operationId": "get-user-donations",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Donation"
+                        }
+                    }
+                }
+            }
+        },
+        "/donation/project": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Returns list of project donations",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "donation"
+                ],
+                "summary": "Returns list of project donations",
+                "operationId": "get-project-donations",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ProjectDonation"
+                        }
+                    }
+                }
+            }
+        },
         "/login": {
             "post": {
                 "description": "get token for user",
@@ -269,6 +321,24 @@ var doc = `{
                 }
             }
         },
+        "handlers.ProjectDonation": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "locked": {
+                    "type": "boolean"
+                },
+                "paid": {
+                    "type": "boolean"
+                },
+                "user": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.User"
+                }
+            }
+        },
         "handlers.TokenRequest": {
             "type": "object",
             "properties": {
@@ -342,6 +412,23 @@ var doc = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "models.Donation": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "locked": {
+                    "type": "boolean"
+                },
+                "paid": {
+                    "type": "boolean"
+                },
+                "payment": {
+                    "type": "integer"
                 }
             }
         },

@@ -23,12 +23,6 @@ type TokenResponse struct {
 	Token string `json:"token"`
 }
 
-func errorResponse(message string) map[string]string {
-	return map[string]string{
-		"error": message,
-	}
-}
-
 // AuthHandler ...
 type AuthHandler struct {
 	Secret    string

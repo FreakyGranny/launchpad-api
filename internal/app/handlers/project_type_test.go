@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -48,21 +49,21 @@ func (s *ProjectTypeSuite) TestGetAllProjectTypes() {
 
 	projectTypes := []models.ProjectType{
 		{
-			ID:    1,
-			Alias: "other",
-			Name:  "Other",
-			Options: []string{},
-			GoalByAmount: false,
-			GoalByPeople: true,
+			ID:            1,
+			Alias:         "other",
+			Name:          "Other",
+			Options:       []string{},
+			GoalByAmount:  false,
+			GoalByPeople:  true,
 			EndByGoalGain: true,
 		},
 		{
-			ID:    2,
-			Alias: "some",
-			Name:  "Some",
-			Options: []string{},
-			GoalByAmount: true,
-			GoalByPeople: false,
+			ID:            2,
+			Alias:         "some",
+			Name:          "Some",
+			Options:       []string{},
+			GoalByAmount:  true,
+			GoalByPeople:  false,
 			EndByGoalGain: true,
 		},
 	}
@@ -72,9 +73,9 @@ func (s *ProjectTypeSuite) TestGetAllProjectTypes() {
 	s.Require().NoError(h.GetProjectTypes(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
 
-	var ptJSON = "[{\"id\":1,\"alias\":\"other\",\"name\":\"Other\",\"options\":[],\"goal_by_people\":true,\"goal_by_amount\":false,\"end_by_goal_gain\":true},{\"id\":2,\"alias\":\"some\",\"name\":\"Some\",\"options\":[],\"goal_by_people\":false,\"goal_by_amount\":true,\"end_by_goal_gain\":true}]\n"
+	var ptJSON = `[{"id":1,"alias":"other","name":"Other","options":[],"goal_by_people":true,"goal_by_amount":false,"end_by_goal_gain":true},{"id":2,"alias":"some","name":"Some","options":[],"goal_by_people":false,"goal_by_amount":true,"end_by_goal_gain":true}]`
 
-	s.Require().Equal(ptJSON, rec.Body.String())
+	s.Require().Equal(ptJSON, strings.Trim(rec.Body.String(), "\n"))
 }
 
 func TestProjectTypeSuite(t *testing.T) {

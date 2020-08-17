@@ -91,7 +91,10 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 // @Security Bearer
 // @Router /user/{id} [get]
 func (h *UserHandler) GetUser(c echo.Context) error {
-	intID, _ := strconv.Atoi(c.Param("id"))
+	intID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, errorResponse("wrong ID"))
+	}
 	user, ok := h.UserModel.FindByID(intID)
 	if !ok {
 		return c.JSON(http.StatusNotFound, nil)

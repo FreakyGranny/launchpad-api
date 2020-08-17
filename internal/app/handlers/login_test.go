@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -97,9 +98,9 @@ func (s *LoginSuite) TestWithCreateUser() {
 	s.Require().Equal(user.ID, a.UserID)
 	s.Require().Equal(user.Email, a.Email)
 
-	var tokenJSON = "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6ZmFsc2UsImV4cCI6NDQ5ODg0OTIzLCJpZCI6MTN9.QDU7Og620wNdjDNFouk6jRmeBRqzhD9A6FgZa1x1gUs\"}\n"
+	var tokenJSON = `{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6ZmFsc2UsImV4cCI6NDQ5ODg0OTIzLCJpZCI6MTN9.QDU7Og620wNdjDNFouk6jRmeBRqzhD9A6FgZa1x1gUs"}`
 
-	s.Require().Equal(tokenJSON, rec.Body.String())
+	s.Require().Equal(tokenJSON, strings.Trim(rec.Body.String(), "\n"))
 }
 
 func (s *LoginSuite) TestWithUpdateUser() {
@@ -156,8 +157,8 @@ func (s *LoginSuite) TestWithUpdateUser() {
 	s.Require().Equal(user.ID, a.UserID)
 	s.Require().Equal(user.Email, a.Email)
 
-	var tokenJSON = "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6ZmFsc2UsImV4cCI6NDQ5ODg0OTIzLCJpZCI6MTN9.QDU7Og620wNdjDNFouk6jRmeBRqzhD9A6FgZa1x1gUs\"}\n"
-	s.Require().Equal(tokenJSON, rec.Body.String())
+	var tokenJSON = `{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6ZmFsc2UsImV4cCI6NDQ5ODg0OTIzLCJpZCI6MTN9.QDU7Og620wNdjDNFouk6jRmeBRqzhD9A6FgZa1x1gUs"}`
+	s.Require().Equal(tokenJSON, strings.Trim(rec.Body.String(), "\n"))
 }
 
 func TestLoginSuite(t *testing.T) {

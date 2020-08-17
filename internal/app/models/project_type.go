@@ -4,7 +4,7 @@ import (
 	"github.com/go-pg/pg/v10"
 )
 
-//go:generate mockgen -destination=../mocks/model_p_type_mock.go -package=mocks . ProjectTypeImpl
+//go:generate mockgen -source=$GOFILE -destination=../mocks/model_p_type_mock.go -package=mocks . ProjectTypeImpl
 
 // ProjectTypeImpl ...
 type ProjectTypeImpl interface {
@@ -13,7 +13,7 @@ type ProjectTypeImpl interface {
 
 // ProjectType of project
 type ProjectType struct {
-	tableName     struct{} `pg:"project_types,alias:pt"`
+	tableName     struct{} `pg:"project_types,alias:pt"` //nolint
 	ID            uint     `json:"id"`
 	Alias         string   `json:"alias"`
 	Name          string   `json:"name"`

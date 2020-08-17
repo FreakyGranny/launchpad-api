@@ -38,6 +38,18 @@ definitions:
       total:
         type: integer
     type: object
+  handlers.ProjectDonation:
+    properties:
+      id:
+        type: integer
+      locked:
+        type: boolean
+      paid:
+        type: boolean
+      user:
+        $ref: '#/definitions/models.User'
+        type: object
+    type: object
   handlers.TokenRequest:
     properties:
       code:
@@ -86,6 +98,17 @@ definitions:
         type: integer
       name:
         type: string
+    type: object
+  models.Donation:
+    properties:
+      id:
+        type: integer
+      locked:
+        type: boolean
+      paid:
+        type: boolean
+      payment:
+        type: integer
     type: object
   models.ProjectType:
     properties:
@@ -148,6 +171,38 @@ paths:
       summary: Returns list of categories
       tags:
       - category
+  /donation:
+    get:
+      description: Returns list of user's donations
+      operationId: get-user-donations
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Donation'
+      security:
+      - Bearer: []
+      summary: Returns list of user's donations
+      tags:
+      - donation
+  /donation/project:
+    get:
+      description: Returns list of project donations
+      operationId: get-project-donations
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ProjectDonation'
+      security:
+      - Bearer: []
+      summary: Returns list of project donations
+      tags:
+      - donation
   /login:
     post:
       consumes:
