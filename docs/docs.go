@@ -367,16 +367,13 @@ var doc = `{
                 "id": {
                     "type": "integer"
                 },
-                "is_staff": {
-                    "type": "boolean"
-                },
                 "last_name": {
                     "type": "string"
                 },
                 "participation": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handlers.participation"
+                        "$ref": "#/definitions/models.Participation"
                     }
                 },
                 "project_count": {
@@ -387,17 +384,6 @@ var doc = `{
                 },
                 "username": {
                     "type": "string"
-                }
-            }
-        },
-        "handlers.participation": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
                 }
             }
         },
@@ -428,6 +414,20 @@ var doc = `{
                     "type": "boolean"
                 },
                 "payment": {
+                    "type": "integer"
+                },
+                "project": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.Participation": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "id": {
                     "type": "integer"
                 }
             }

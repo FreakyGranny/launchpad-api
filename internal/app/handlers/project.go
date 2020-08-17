@@ -233,10 +233,10 @@ func (h *ProjectHandler) GetSingleProject(c echo.Context) error {
 	// }
 
 	projectResponse := ProjectDetailView{
-		ID:       project.ID,
-		Title:    project.Title,
-		SubTitle: project.SubTitle,
-		// Status:       project.Status(),
+		ID:          project.ID,
+		Title:       project.Title,
+		SubTitle:    project.SubTitle,
+		Status:      project.Status(),
 		ReleaseDate: project.ReleaseDate.Format(dateLayout),
 		ImageLink:   project.ImageLink,
 		Total:       project.Total,

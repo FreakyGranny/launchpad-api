@@ -77,3 +77,18 @@ func (mr *MockUserImplMockRecorder) Update(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUserImpl)(nil).Update), arg0)
 }
+
+// GetParticipation mocks base method
+func (m *MockUserImpl) GetParticipation(id int) ([]models.Participation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetParticipation", id)
+	ret0, _ := ret[0].([]models.Participation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetParticipation indicates an expected call of GetParticipation
+func (mr *MockUserImplMockRecorder) GetParticipation(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParticipation", reflect.TypeOf((*MockUserImpl)(nil).GetParticipation), id)
+}

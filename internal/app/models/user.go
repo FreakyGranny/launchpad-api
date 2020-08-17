@@ -11,6 +11,7 @@ type UserImpl interface {
 	FindByID(id int) (*User, bool)
 	Create(*User) (*User, error)
 	Update(*User) (*User, error)
+	GetParticipation(id int) ([]Participation, error)
 }
 
 // User model
@@ -68,4 +69,27 @@ func (r *UserRepo) Update(u *User) (*User, error) {
 	}
 
 	return u, nil
+}
+
+// Participation ...
+type Participation struct {
+	Cnt           uint `json:"count"`
+	ProjectTypeID uint `json:"id"`
+}
+
+// GetParticipation ...
+func (r *UserRepo) GetParticipation(id int) ([]Participation, error) {
+	pts := make([]Participation, 0)
+	err := r.db.Model((*Donation)(nil)).
+		ColumnExpr("count(d.id) AS cnt").
+		ColumnExpr("p.project_type_id").
+		Join("JOIN projects as p ON d.project_id = p.id").
+		Group("p.project_type_id").
+		Where("d.user_id = ?", id).
+		Select(&pts)
+	if err != nil {
+		return nil, err
+	}
+
+	return pts, nil
 }

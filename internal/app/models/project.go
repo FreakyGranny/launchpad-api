@@ -8,6 +8,19 @@ import (
 
 //go:generate mockgen -source=$GOFILE -destination=../mocks/model_project_mock.go -package=mocks . ProjectImpl
 
+const (
+	// StatusDraft draft project
+	StatusDraft string = "draft"
+	// StatusSuccess success project
+	StatusSuccess string = "success"
+	// StatusFail fail project
+	StatusFail string = "fail"
+	// StatusHarvest harvest project
+	StatusHarvest string = "harvest"
+	// StatusSearch search project
+	StatusSearch string = "search"
+)
+
 // ProjectImpl ...
 type ProjectImpl interface {
 	Get(id int) (*Project, bool)
@@ -37,6 +50,24 @@ type Project struct {
 	CategoryID    int
 	ProjectType   ProjectType
 	ProjectTypeID int
+}
+
+// Status of project
+func (p *Project) Status() string {
+	if !p.Published {
+		return StatusDraft
+	}
+	if p.Closed {
+		if p.Locked {
+			return StatusSuccess
+		}
+		return StatusFail
+	}
+	if p.Locked {
+		return StatusHarvest
+	}
+
+	return StatusSearch
 }
 
 // ProjectRepo ...

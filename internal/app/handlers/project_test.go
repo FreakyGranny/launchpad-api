@@ -68,7 +68,7 @@ func (s *ProjectSuite) TestGetSingleProject() {
 	s.Require().NoError(h.GetSingleProject(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
 
-	var pJSON = `{"id":1,"title":"Title","subtitle":"Subtitle","status":"","release_date":"0001-01-01","event_date":null,"image_link":"","total":0,"percent":0,"category":{"id":0,"alias":"","name":""},"project_type":{"id":0,"alias":"","name":"","options":null,"goal_by_people":false,"goal_by_amount":false,"end_by_goal_gain":false},"goal_people":0,"goal_amount":0,"description":"","instructions":"","owner":{"id":1,"username":"","first_name":"John","last_name":"Doe","avatar":"","project_count":0,"success_rate":0}}`
+	var pJSON = `{"id":1,"title":"Title","subtitle":"Subtitle","status":"search","release_date":"0001-01-01","event_date":null,"image_link":"","total":0,"percent":0,"category":{"id":0,"alias":"","name":""},"project_type":{"id":0,"alias":"","name":"","options":null,"goal_by_people":false,"goal_by_amount":false,"end_by_goal_gain":false},"goal_people":0,"goal_amount":0,"description":"","instructions":"","owner":{"id":1,"username":"","first_name":"John","last_name":"Doe","avatar":"","project_count":0,"success_rate":0}}`
 
 	s.Require().Equal(pJSON, strings.Trim(rec.Body.String(), "\n"))
 }

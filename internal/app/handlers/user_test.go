@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/dgrijalva/jwt-go"
@@ -57,15 +58,25 @@ func (s *UserSuite) TestGetUserByID() {
 		Avatar:    "A",
 		Email:     "E",
 	}
+	pts := []models.Participation{
+		{
+			Cnt:           1,
+			ProjectTypeID: 1,
+		},
+		{
+			Cnt:           2,
+			ProjectTypeID: 2,
+		},
+	}
 
 	s.mockUser.EXPECT().FindByID(1).Return(user, true)
+	s.mockUser.EXPECT().GetParticipation(1).Return(pts, nil)
 
 	s.Require().NoError(h.GetUser(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
 
-	var tokenJSON = "{\"id\":1,\"username\":\"X\",\"first_name\":\"Y\",\"last_name\":\"Z\",\"avatar\":\"A\",\"project_count\":0,\"success_rate\":0}\n"
-
-	s.Require().Equal(tokenJSON, rec.Body.String())
+	var tokenJSON = `{"id":1,"username":"X","first_name":"Y","last_name":"Z","avatar":"A","project_count":0,"success_rate":0,"participation":[{"count":1,"id":1},{"count":2,"id":2}]}`
+	s.Require().Equal(tokenJSON, strings.Trim(rec.Body.String(), "\n"))
 }
 
 func (s *UserSuite) TestGetUserNotFound() {
@@ -108,17 +119,26 @@ func (s *UserSuite) TestGetCurrentUser() {
 	claims["id"] = float64(user.ID)
 
 	c.Set("user", token)
-
 	h := NewUserHandler(s.mockUser)
 
 	s.mockUser.EXPECT().FindByID(1).Return(user, true)
+	pts := []models.Participation{
+		{
+			Cnt:           1,
+			ProjectTypeID: 1,
+		},
+		{
+			Cnt:           2,
+			ProjectTypeID: 2,
+		},
+	}
+	s.mockUser.EXPECT().GetParticipation(1).Return(pts, nil)
 
 	s.Require().NoError(h.GetCurrentUser(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
 
-	var tokenJSON = "{\"id\":1,\"username\":\"X\",\"first_name\":\"Y\",\"last_name\":\"Z\",\"avatar\":\"A\",\"project_count\":0,\"success_rate\":0}\n"
-
-	s.Require().Equal(tokenJSON, rec.Body.String())
+	var tokenJSON = `{"id":1,"username":"X","first_name":"Y","last_name":"Z","avatar":"A","project_count":0,"success_rate":0,"participation":[{"count":1,"id":1},{"count":2,"id":2}]}`
+	s.Require().Equal(tokenJSON, strings.Trim(rec.Body.String(), "\n"))
 }
 
 func TestUserSuite(t *testing.T) {

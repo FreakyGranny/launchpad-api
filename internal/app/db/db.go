@@ -7,14 +7,6 @@ import (
 	"github.com/go-pg/pg/v10"
 )
 
-func sslMode(sslEnable bool) string {
-	if sslEnable {
-		return "enable"
-	}
-
-	return "disable"
-}
-
 // Connect ...
 func Connect(cfg *config.PgConnection) (*pg.DB, error) {
 	db := pg.Connect(&pg.Options{
