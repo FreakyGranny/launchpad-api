@@ -31,4 +31,5 @@ jobs:
 
     - stage: "Tests"
       name: "Unit tests"
-      script: go test -v -count=1 -race -gcflags=-l -timeout=30s ./...
+      script: go test -v -count=1 -race -gcflags=-l -timeout=30s -coverprofile=coverage.txt -covermode=atomic ./...
+      after_success: bash <(curl -s https://codecov.io/bash)
