@@ -2,22 +2,22 @@
 
 [![Build Status](https://travis-ci.com/FreakyGranny/launchpad-api.svg?branch=master)](https://travis-ci.com/FreakyGranny/launchpad-api) [![codecov](https://codecov.io/gh/FreakyGranny/launchpad-api/branch/master/graph/badge.svg)](https://codecov.io/gh/FreakyGranny/launchpad-api)
 
+Run API
+=======
+
+```
+lpad api
+```
+
 Migrations
 ==========
 
-manual migration
+init migrations
 ```
-migrate -path migrations --database "postgres://localhost/launchpad?sslmode=disable&user=lpad&password=secret" up
-```
-
-new migration
-```
-migrate create -ext sql -dir migrations create_something
+lpad migrate init
 ```
 
-Generate OAPI docs
-==================
-
+apply migrations
 ```
-swag i -g cmd/lpadapi/main.go -o docs
+lpad migrate up
 ```

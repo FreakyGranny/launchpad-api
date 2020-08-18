@@ -47,3 +47,86 @@ func (mr *MockProjectImplMockRecorder) Get(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockProjectImpl)(nil).Get), id)
 }
+
+// GetProjectsWithPagination mocks base method
+func (m *MockProjectImpl) GetProjectsWithPagination(f *models.ProjectListFilter) (models.ProjectPaginatorImpl, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProjectsWithPagination", f)
+	ret0, _ := ret[0].(models.ProjectPaginatorImpl)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProjectsWithPagination indicates an expected call of GetProjectsWithPagination
+func (mr *MockProjectImplMockRecorder) GetProjectsWithPagination(f interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjectsWithPagination", reflect.TypeOf((*MockProjectImpl)(nil).GetProjectsWithPagination), f)
+}
+
+// GetUserProjects mocks base method
+func (m *MockProjectImpl) GetUserProjects(f *models.ProjectUserFilter) ([]models.Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserProjects", f)
+	ret0, _ := ret[0].([]models.Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserProjects indicates an expected call of GetUserProjects
+func (mr *MockProjectImplMockRecorder) GetUserProjects(f interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserProjects", reflect.TypeOf((*MockProjectImpl)(nil).GetUserProjects), f)
+}
+
+// MockProjectPaginatorImpl is a mock of ProjectPaginatorImpl interface
+type MockProjectPaginatorImpl struct {
+	ctrl     *gomock.Controller
+	recorder *MockProjectPaginatorImplMockRecorder
+}
+
+// MockProjectPaginatorImplMockRecorder is the mock recorder for MockProjectPaginatorImpl
+type MockProjectPaginatorImplMockRecorder struct {
+	mock *MockProjectPaginatorImpl
+}
+
+// NewMockProjectPaginatorImpl creates a new mock instance
+func NewMockProjectPaginatorImpl(ctrl *gomock.Controller) *MockProjectPaginatorImpl {
+	mock := &MockProjectPaginatorImpl{ctrl: ctrl}
+	mock.recorder = &MockProjectPaginatorImplMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use
+func (m *MockProjectPaginatorImpl) EXPECT() *MockProjectPaginatorImplMockRecorder {
+	return m.recorder
+}
+
+// NextPage mocks base method
+func (m *MockProjectPaginatorImpl) NextPage() (int, bool) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NextPage")
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(bool)
+	return ret0, ret1
+}
+
+// NextPage indicates an expected call of NextPage
+func (mr *MockProjectPaginatorImplMockRecorder) NextPage() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NextPage", reflect.TypeOf((*MockProjectPaginatorImpl)(nil).NextPage))
+}
+
+// Retrieve mocks base method
+func (m *MockProjectPaginatorImpl) Retrieve() (*[]models.Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Retrieve")
+	ret0, _ := ret[0].(*[]models.Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Retrieve indicates an expected call of Retrieve
+func (mr *MockProjectPaginatorImplMockRecorder) Retrieve() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Retrieve", reflect.TypeOf((*MockProjectPaginatorImpl)(nil).Retrieve))
+}

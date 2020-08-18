@@ -23,7 +23,7 @@ func NewCategoryHandler(c models.CategoryImpl) *CategoryHandler {
 // @Tags category
 // @ID get-categories
 // @Produce  json
-// @Success 200 {object} models.Category
+// @Success 200 {object} []models.Category
 // @Security Bearer
 // @Router /category [get]
 func (h *CategoryHandler) GetCategories(c echo.Context) error {

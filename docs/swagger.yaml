@@ -50,6 +50,44 @@ definitions:
         $ref: '#/definitions/models.User'
         type: object
     type: object
+  handlers.ProjectListResponse:
+    properties:
+      has_next:
+        type: boolean
+      next:
+        type: integer
+      results:
+        items:
+          $ref: '#/definitions/handlers.ProjectListView'
+        type: array
+    type: object
+  handlers.ProjectListView:
+    properties:
+      category:
+        $ref: '#/definitions/models.Category'
+        type: object
+      event_date:
+        type: string
+      id:
+        type: integer
+      image_link:
+        type: string
+      percent:
+        type: integer
+      project_type:
+        $ref: '#/definitions/models.ProjectType'
+        type: object
+      release_date:
+        type: string
+      status:
+        type: string
+      subtitle:
+        type: string
+      title:
+        type: string
+      total:
+        type: integer
+    type: object
   handlers.TokenRequest:
     properties:
       code:
@@ -165,7 +203,9 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Category'
+            items:
+              $ref: '#/definitions/models.Category'
+            type: array
       security:
       - Bearer: []
       summary: Returns list of categories
@@ -181,7 +221,9 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Donation'
+            items:
+              $ref: '#/definitions/models.Donation'
+            type: array
       security:
       - Bearer: []
       summary: Returns list of user's donations
@@ -197,7 +239,9 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.ProjectDonation'
+            items:
+              $ref: '#/definitions/handlers.ProjectDonation'
+            type: array
       security:
       - Bearer: []
       summary: Returns list of project donations
@@ -226,6 +270,43 @@ paths:
       summary: Returns access token
       tags:
       - auth
+  /project:
+    get:
+      description: Returns list of projects with filters
+      operationId: get-projects
+      parameters:
+      - description: Page num
+        in: query
+        name: page
+        type: integer
+      - description: Capasity of one page
+        in: query
+        name: page_size
+        type: integer
+      - description: Category ID
+        in: query
+        name: category
+        type: integer
+      - description: Project Type ID
+        in: query
+        name: project_type
+        type: integer
+      - description: Return only open
+        in: query
+        name: open
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ProjectListResponse'
+      security:
+      - Bearer: []
+      summary: Returns list of projects
+      tags:
+      - project
   /project/{id}:
     get:
       description: Returns project by ID
@@ -258,7 +339,9 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.ProjectType'
+            items:
+              $ref: '#/definitions/models.ProjectType'
+            type: array
       security:
       - Bearer: []
       summary: return list of project types

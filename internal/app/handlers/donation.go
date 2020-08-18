@@ -42,7 +42,7 @@ type ProjectDonation struct {
 // @Tags donation
 // @ID get-user-donations
 // @Produce  json
-// @Success 200 {object} models.Donation
+// @Success 200 {object} []models.Donation
 // @Security Bearer
 // @Router /donation [get]
 func (h *DonationHandler) GetUserDonations(c echo.Context) error {
@@ -64,7 +64,7 @@ func (h *DonationHandler) GetUserDonations(c echo.Context) error {
 // @Tags donation
 // @ID get-project-donations
 // @Produce  json
-// @Success 200 {object} ProjectDonation
+// @Success 200 {object} []ProjectDonation
 // @Security Bearer
 // @Router /donation/project [get]
 func (h *DonationHandler) GetProjectDonations(c echo.Context) error {

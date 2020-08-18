@@ -48,7 +48,10 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Category"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Category"
+                            }
                         }
                     }
                 }
@@ -74,7 +77,10 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Donation"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Donation"
+                            }
                         }
                     }
                 }
@@ -100,7 +106,10 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ProjectDonation"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handlers.ProjectDonation"
+                            }
                         }
                     }
                 }
@@ -136,6 +145,64 @@ var doc = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/handlers.TokenResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/project": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Returns list of projects with filters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "project"
+                ],
+                "summary": "Returns list of projects",
+                "operationId": "get-projects",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page num",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Capasity of one page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "category",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Project Type ID",
+                        "name": "project_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Return only open",
+                        "name": "open",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ProjectListResponse"
                         }
                     }
                 }
@@ -196,7 +263,10 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.ProjectType"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.ProjectType"
+                            }
                         }
                     }
                 }
@@ -336,6 +406,63 @@ var doc = `{
                 "user": {
                     "type": "object",
                     "$ref": "#/definitions/models.User"
+                }
+            }
+        },
+        "handlers.ProjectListResponse": {
+            "type": "object",
+            "properties": {
+                "has_next": {
+                    "type": "boolean"
+                },
+                "next": {
+                    "type": "integer"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.ProjectListView"
+                    }
+                }
+            }
+        },
+        "handlers.ProjectListView": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.Category"
+                },
+                "event_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "image_link": {
+                    "type": "string"
+                },
+                "percent": {
+                    "type": "integer"
+                },
+                "project_type": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.ProjectType"
+                },
+                "release_date": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "subtitle": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },

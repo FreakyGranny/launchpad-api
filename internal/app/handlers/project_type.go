@@ -23,7 +23,7 @@ func NewProjectTypeHandler(pt models.ProjectTypeImpl) *ProjectTypeHandler {
 // @Tags project type
 // @ID get-project-types
 // @Produce json
-// @Success 200 {object} models.ProjectType
+// @Success 200 {object} []models.ProjectType
 // @Security Bearer
 // @Router /project_type [get]
 func (h *ProjectTypeHandler) GetProjectTypes(c echo.Context) error {

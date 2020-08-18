@@ -4,22 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	// 	"time"
-
 	"github.com/FreakyGranny/launchpad-api/internal/app/models"
 	"github.com/labstack/echo/v4"
 )
-
-// import (
-// 	// "github.com/labstack/gommon/log"
-// 	"github.com/dgrijalva/jwt-go"
-// 	"github.com/labstack/echo/v4"
-// 	"github.com/vcraescu/go-paginator"
-// 	"github.com/vcraescu/go-paginator/adapter"
-
-// 	"github.com/FreakyGranny/launchpad-api/db"
-// 	"github.com/FreakyGranny/launchpad-api/misc"
-// )
 
 const (
 	dateLayout     = "2006-01-02"
@@ -93,121 +80,90 @@ func NewProjectHandler(m models.ProjectImpl) *ProjectHandler {
 	return &ProjectHandler{ProjectModel: m}
 }
 
-// func filterQuery(userID int, filter string, dbClient *gorm.DB) *gorm.DB {
-// 	query := dbClient
-// 	if filter == "open" {
-// 		query = query.Where("closed = ?", false)
-// 	}
-// 	if filter == "owned" {
-// 		query = query.Where("owner_id = ?", userID)
-// 	} else {
-// 		query = query.Where("published = ?", true)
-// 	}
-// 	if filter == "contributed" {
-// 		query = query.Where("id IN (?)", dbClient.Table("donations").Select("project_id").Where("user_id = ?", userID).SubQuery())
-// 	}
+// GetProjects godoc
+// @Summary Returns list of projects
+// @Description Returns list of projects with filters
+// @Tags project
+// @ID get-projects
+// @Produce  json
+// @Param page query int false "Page num"
+// @Param page_size query int false "Capasity of one page"
+// @Param category query int false "Category ID"
+// @Param project_type query int false "Project Type ID"
+// @Param open query bool false "Return only open"
+// @Success 200 {object} ProjectListResponse
+// @Security Bearer
+// @Router /project [get]
+func (h *ProjectHandler) GetProjects(c echo.Context) error {
+	// userID, err := getUserIDFromToken(c.Get("user"))
+	// if err != nil {
+	// 	return c.JSON(http.StatusBadRequest, err)
+	// }
 
-// 	return query
-// }
+	categoryInt, _ := strconv.Atoi(c.QueryParam("category"))
+	typeInt, _ := strconv.Atoi(c.QueryParam("type"))
+	onlyOpen, _ := strconv.ParseBool(c.QueryParam("open"))
 
-// func filterQueryByCategory(categoryID int, dbClient *gorm.DB) *gorm.DB {
-// 	if categoryID != 0 {
-// 		return dbClient.Where("category_id = ?", categoryID)
-// 	}
+	pageInt, err := strconv.Atoi(c.QueryParam("page"))
+	if err != nil || pageInt == 0 {
+		pageInt = 1
+	}
+	pageSizeInt, err := strconv.Atoi(c.QueryParam("page_size"))
+	if err != nil || pageSizeInt == 0 {
+		pageSizeInt = 10
+	}
+	pFilter := &models.ProjectListFilter{
+		Category:    categoryInt,
+		ProjectType: typeInt,
+		OnlyOpen:    onlyOpen,
+		Page:        pageInt,
+		PageSize:    pageSizeInt,
+	}
 
-// 	return dbClient
-// }
+	paginator, err := h.ProjectModel.GetProjectsWithPagination(pFilter)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+	next, hasNext := paginator.NextPage()
 
-// func filterQueryByProjectType(projectType int, dbClient *gorm.DB) *gorm.DB {
-// 	if projectType != 0 {
-// 		return dbClient.Where("project_type_id = ?", projectType)
-// 	}
+	projectListEntries := make([]ProjectListView, 0)
 
-// 	return dbClient
-// }
+	projects, err := paginator.Retrieve()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+	for _, project := range *projects {
+		// strategy, err := misc.GetStrategy(project.ProjectType)
+		// if err != nil {
+		// 	return c.JSON(http.StatusInternalServerError, nil)
+		// }
+		plv := ProjectListView{
+			ID:          project.ID,
+			Title:       project.Title,
+			SubTitle:    project.SubTitle,
+			Status:      project.Status(),
+			ReleaseDate: project.ReleaseDate.Format(dateLayout),
+			ImageLink:   project.ImageLink,
+			Total:       project.Total,
+			// Percent: strategy.Percent(&project),
+			Category:    project.Category,
+			ProjectType: project.ProjectType,
+		}
 
-// func filterQueryByUserID(userID int, dbClient *gorm.DB) *gorm.DB {
-// 	if userID != 0 {
-// 		return dbClient.Where("owner_id = ?", userID)
-// 	}
+		if !project.EventDate.IsZero() {
+			ed := project.EventDate.Format(dateTimeLayout)
+			plv.EventDate = &ed
+		}
 
-// 	return dbClient
-// }
+		projectListEntries = append(projectListEntries, plv)
+	}
 
-// // GetProjects return list of projects
-// func GetProjects(c echo.Context) error {
-// 	userToken := c.Get("user").(*jwt.Token)
-// 	claims := userToken.Claims.(jwt.MapClaims)
-// 	userID := claims["id"].(float64)
-
-// 	categoryParam := c.QueryParam("category")
-// 	typeParam := c.QueryParam("type")
-// 	userParam := c.QueryParam("user")
-// 	filterParam := c.QueryParam("filter")
-
-// 	page := c.QueryParam("page")
-// 	pageSize := c.QueryParam("page_size")
-
-// 	pageInt, _ := strconv.Atoi(page)
-// 	pageSizeInt, _ := strconv.Atoi(pageSize)
-// 	categoryInt, _ := strconv.Atoi(categoryParam)
-// 	typeInt, _ := strconv.Atoi(typeParam)
-// 	userInt, _ := strconv.Atoi(userParam)
-
-// 	client := db.GetDbClient()
-// 	var projects []db.Project
-
-// 	allRows := client.Preload("ProjectType").Preload("Category").Model(db.Project{})
-
-// 	allRows = filterQueryByCategory(categoryInt, allRows)
-// 	allRows = filterQueryByProjectType(typeInt, allRows)
-// 	allRows = filterQueryByUserID(userInt, allRows)
-// 	allRows = filterQuery(int(userID), filterParam, allRows)
-
-// 	paginated := paginator.New(adapter.NewGORMAdapter(allRows.Order("id desc")), pageSizeInt)
-// 	paginated.SetPage(pageInt)
-
-// 	if err := paginated.Results(&projects); err != nil {
-// 			  panic(err)
-// 			}
-// 	next, _ := paginated.NextPage()
-
-// 	projectListEntries := make([]ProjectListView, 0)
-
-// 	for _, project := range(projects) {
-// 		strategy, err := misc.GetStrategy(project.ProjectType)
-// 		if err != nil {
-// 			return c.JSON(http.StatusInternalServerError, nil)
-// 		}
-// 		plv := ProjectListView{
-// 			ID: project.ID,
-// 			Title: project.Title,
-// 			SubTitle: project.SubTitle,
-// 			Status: project.Status(),
-// 			ReleaseDate: project.ReleaseDate.Format(dateLayout),
-// 			ImageLink: project.ImageLink,
-// 			Total: project.Total,
-// 			Percent: strategy.Percent(&project),
-// 			Category: project.Category,
-// 			ProjectType: project.ProjectType,
-// 		}
-
-// 		if project.EventDate.IsZero() {
-// 			plv.EventDate = nil
-// 		} else {
-// 			ed := project.EventDate.Format(dateTimeLayout)
-// 			plv.EventDate = &ed
-// 		}
-
-// 		projectListEntries = append(projectListEntries, plv)
-// 	}
-
-// 	return c.JSON(http.StatusOK, ProjectListResponse{
-// 		Results: projectListEntries,
-// 		NextPage: next,
-// 		HasNext: paginated.HasNext(),
-// 	})
-// }
+	return c.JSON(http.StatusOK, ProjectListResponse{
+		Results:  projectListEntries,
+		NextPage: next,
+		HasNext:  hasNext,
+	})
+}
 
 // GetSingleProject godoc
 // @Summary Show a single project

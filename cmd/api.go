@@ -63,7 +63,7 @@ func API(cmd *cobra.Command, args []string) {
 
 	hu := handlers.NewUserHandler(models.NewUserModel(d))
 	u := e.Group("/user")
-	// u.Use(JWTmiddleware)
+	u.Use(JWTmiddleware)
 	u.GET("", hu.GetCurrentUser)
 	u.GET("/:id", hu.GetUser)
 
@@ -80,15 +80,16 @@ func API(cmd *cobra.Command, args []string) {
 	hp := handlers.NewProjectHandler(models.NewProjectModel(d))
 	p := e.Group("/project")
 	// p.Use(JWTmiddleware)
-	// p.GET("", api.GetProjects)
-	// p.POST("", api.CreateProject)
+	p.GET("", hp.GetProjects)
+	// p.GET("/user", hp.GetUserProjects)
 	p.GET("/:id", hp.GetSingleProject)
+	// p.POST("", api.CreateProject)
 	// p.PATCH("/:id", api.UpdateProject)
 	// p.DELETE("/:id", api.DeleteProject)
 
 	hd := handlers.NewDonationHandler(models.NewDonationModel(d))
 	dg := e.Group("/donation")
-	p.Use(JWTmiddleware)
+	dg.Use(JWTmiddleware)
 	dg.GET("", hd.GetUserDonations)
 	dg.GET("/project/:id", hd.GetProjectDonations)
 	// d.POST("", api.CreateDonation)

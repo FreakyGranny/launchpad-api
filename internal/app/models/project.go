@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
 )
 
 //go:generate mockgen -source=$GOFILE -destination=../mocks/model_project_mock.go -package=mocks . ProjectImpl
@@ -24,7 +25,8 @@ const (
 // ProjectImpl ...
 type ProjectImpl interface {
 	Get(id int) (*Project, bool)
-	// GetAll() ([]Category, error)
+	GetProjectsWithPagination(f *ProjectListFilter) (ProjectPaginatorImpl, error)
+	GetUserProjects(f *ProjectUserFilter) ([]Project, error)
 }
 
 // Project model
@@ -70,6 +72,61 @@ func (p *Project) Status() string {
 	return StatusSearch
 }
 
+// ProjectListFilter ...
+type ProjectListFilter struct {
+	Category    int
+	ProjectType int
+	OnlyOpen    bool
+	PageSize    int
+	Page        int
+}
+
+// ProjectUserFilter ...
+type ProjectUserFilter struct {
+	UserID      int
+	Contributed bool
+	Owned       bool
+}
+
+
+// ProjectPaginatorImpl ...
+type ProjectPaginatorImpl interface {
+	NextPage() (int, bool)
+	Retrieve() (*[]Project, error)
+}
+
+// ProjectPaginator ...
+type ProjectPaginator struct {
+	EntryCount int
+	PageSize   int
+	Query      *orm.Query
+	Page       int
+	Values     *[]Project
+}
+
+// NextPage ...
+func (pp *ProjectPaginator) NextPage() (int, bool) {
+	if pp.Page*pp.Page < pp.EntryCount {
+		return pp.Page + 1, true
+	}
+	return 0, false
+}
+
+// Retrieve ...
+func (pp *ProjectPaginator) Retrieve() (*[]Project, error) {
+	var ofst int
+
+	if pp.Page > 1 {
+		ofst = pp.PageSize * (pp.Page - 1)
+	}
+	err := pp.Query.Offset(ofst).Limit(pp.PageSize).Order("id DESC").Select()
+	if err != nil {
+		return nil, err
+	}
+
+	return pp.Values, nil
+}
+
 // ProjectRepo ...
 type ProjectRepo struct {
 	db *pg.DB
@@ -93,13 +150,56 @@ func (r *ProjectRepo) Get(id int) (*Project, bool) {
 	return project, true
 }
 
-// // GetAll ...
-// func (r *CategoryRepo) GetAll() ([]Category, error) {
-// 	categories := []Category{}
-// 	err := r.db.Select(&categories, "SELECT * FROM categories order by id asc")
-// 	if err != nil {
-// 		return categories, err
-// 	}
+// GetProjectsWithPagination ...
+func (r *ProjectRepo) GetProjectsWithPagination(f *ProjectListFilter) (ProjectPaginatorImpl, error) {
+	projects := []Project{}
+	q := r.db.Model(&projects).Relation("Category").Relation("ProjectType").Where("p.published", true)
+	if f.Category != 0 {
+		q = q.Where("category_id = ?", f.Category)
+	}
+	if f.ProjectType != 0 {
+		q = q.Where("project_type_id = ?", f.ProjectType)
+	}
+	if f.OnlyOpen {
+		q = q.Where("closed = ?", false)
+	}
+	x, err := q.Count()
+	if err != nil {
+		return nil, err
+	}
+	return &ProjectPaginator{
+		EntryCount: x,
+		Query:      q,
+		Values:     &projects,
+		Page:       f.Page,
+		PageSize:   f.PageSize,
+	}, nil
+}
 
-// 	return categories, nil
-// }
+// GetUserProjects ...
+func (r *ProjectRepo) GetUserProjects(f *ProjectUserFilter) ([]Project, error) {
+	projects := []Project{}
+	q := r.db.Model(&projects).Relation("Category").Relation("ProjectType")
+	if f.UserID != 0 {
+		q = q.Where("owner_id = ?", f.UserID)
+	}
+	if !f.Owned {
+		q = q.Where("p.published", true)
+	}
+	if f.Contributed {
+		q = filterQueryByContribution(q, f.UserID)
+	}
+	err := q.Select()
+	if err != nil {
+		return nil, err
+	}
+
+	return projects, nil
+}
+
+func filterQueryByContribution(q *orm.Query, userID int) *orm.Query {
+	query := q
+	// 	query = query.Where("id IN (?)", dbClient.Table("donations").Select("project_id").Where("user_id = ?", userID).SubQuery())
+
+	return query
+}
