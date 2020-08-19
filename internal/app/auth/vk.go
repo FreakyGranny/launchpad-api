@@ -13,10 +13,10 @@ import (
 const apiVersion = "5.103"
 const userFields = "photo_200,screen_name"
 
-//go:generate mockgen -source=$GOFILE -destination=./vk_http_mock.go -package=auth . HTTPTransport
+//go:generate mockgen -source=$GOFILE -destination=./vk_http_mock.go -package=auth . HTTPClient
 
-// HTTPTransport ...
-type HTTPTransport interface {
+// HTTPClient ...
+type HTTPClient interface {
 	// Do send http request
 	Do(req *http.Request) (*http.Response, error)
 }
@@ -44,7 +44,7 @@ type VkUserData struct {
 
 //VkClient vk api client
 type VkClient struct {
-	HTTPClient  HTTPTransport
+	Client      HTTPClient
 	AppID       string
 	AppSecret   string
 	RedirectURI string
@@ -82,7 +82,7 @@ func (vk *VkClient) buildUserDataRequest(userID int, token string) *http.Request
 func (vk *VkClient) GetAccessToken(code string) (*AccessData, error) {
 	req := vk.buildAuthRequest(code)
 
-	resp, err := vk.HTTPClient.Do(req)
+	resp, err := vk.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func (vk *VkClient) GetAccessToken(code string) (*AccessData, error) {
 // GetUserData Get VK access token
 func (vk *VkClient) GetUserData(userID int, token string) (*UserData, error) {
 	req := vk.buildUserDataRequest(userID, token)
-	resp, err := vk.HTTPClient.Do(req)
+	resp, err := vk.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -129,21 +129,21 @@ func (vk *VkClient) GetUserData(userID int, token string) (*UserData, error) {
 	if len(response.Response) == 0 {
 		return nil, errors.New("No valid user")
 	}
-	
+
 	data := response.Response[0]
 
 	return &UserData{
-		Username: data.Username,
+		Username:  data.Username,
 		FirstName: data.FirstName,
-		LastName: data.LastName,
-		Avatar: data.Avatar,
+		LastName:  data.LastName,
+		Avatar:    data.Avatar,
 	}, nil
 }
 
 //NewVk initialize VK client
 func NewVk(cfg config.VkAuth) *VkClient {
 	return &VkClient{
-		HTTPClient:  &http.Client{},
+		Client:  &http.Client{},
 		AppID:       cfg.AppID,
 		AppSecret:   cfg.ClientSecret,
 		RedirectURI: cfg.RedirectURI,

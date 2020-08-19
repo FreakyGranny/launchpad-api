@@ -14,15 +14,15 @@ import (
 type VkProviderSuite struct {
 	suite.Suite
 	mockCtl  *gomock.Controller
-	mockHTTP *MockHTTPTransport
+	mockHTTP *MockHTTPClient
 	vkClient *VkClient
 }
 
 func (s *VkProviderSuite) SetupTest() {
 	s.mockCtl = gomock.NewController(s.T())
-	s.mockHTTP = NewMockHTTPTransport(s.mockCtl)
+	s.mockHTTP = NewMockHTTPClient(s.mockCtl)
 	s.vkClient = &VkClient{
-		HTTPClient:  s.mockHTTP,
+		Client:  s.mockHTTP,
 		AppID:       "AppID",
 		AppSecret:   "ClientSecret",
 		RedirectURI: "RedirectURI",

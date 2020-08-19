@@ -10,31 +10,31 @@ import (
 	reflect "reflect"
 )
 
-// MockHTTPTransport is a mock of HTTPTransport interface
-type MockHTTPTransport struct {
+// MockHTTPClient is a mock of HTTPClient interface
+type MockHTTPClient struct {
 	ctrl     *gomock.Controller
-	recorder *MockHTTPTransportMockRecorder
+	recorder *MockHTTPClientMockRecorder
 }
 
-// MockHTTPTransportMockRecorder is the mock recorder for MockHTTPTransport
-type MockHTTPTransportMockRecorder struct {
-	mock *MockHTTPTransport
+// MockHTTPClientMockRecorder is the mock recorder for MockHTTPClient
+type MockHTTPClientMockRecorder struct {
+	mock *MockHTTPClient
 }
 
-// NewMockHTTPTransport creates a new mock instance
-func NewMockHTTPTransport(ctrl *gomock.Controller) *MockHTTPTransport {
-	mock := &MockHTTPTransport{ctrl: ctrl}
-	mock.recorder = &MockHTTPTransportMockRecorder{mock}
+// NewMockHTTPClient creates a new mock instance
+func NewMockHTTPClient(ctrl *gomock.Controller) *MockHTTPClient {
+	mock := &MockHTTPClient{ctrl: ctrl}
+	mock.recorder = &MockHTTPClientMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockHTTPTransport) EXPECT() *MockHTTPTransportMockRecorder {
+func (m *MockHTTPClient) EXPECT() *MockHTTPClientMockRecorder {
 	return m.recorder
 }
 
 // Do mocks base method
-func (m *MockHTTPTransport) Do(req *http.Request) (*http.Response, error) {
+func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Do", req)
 	ret0, _ := ret[0].(*http.Response)
@@ -43,7 +43,7 @@ func (m *MockHTTPTransport) Do(req *http.Request) (*http.Response, error) {
 }
 
 // Do indicates an expected call of Do
-func (mr *MockHTTPTransportMockRecorder) Do(req interface{}) *gomock.Call {
+func (mr *MockHTTPClientMockRecorder) Do(req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Do", reflect.TypeOf((*MockHTTPTransport)(nil).Do), req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Do", reflect.TypeOf((*MockHTTPClient)(nil).Do), req)
 }
