@@ -22,7 +22,7 @@ func NewCategoryHandler(c models.CategoryImpl) *CategoryHandler {
 // @Description Returns list of categories
 // @Tags category
 // @ID get-categories
-// @Produce  json
+// @Produce json
 // @Success 200 {object} []models.Category
 // @Security Bearer
 // @Router /category [get]

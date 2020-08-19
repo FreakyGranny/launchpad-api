@@ -29,7 +29,7 @@ func NewUserHandler(u models.UserImpl) *UserHandler {
 // @Description Returns user by ID from token
 // @Tags user
 // @ID get-user-by-token
-// @Produce  json
+// @Produce json
 // @Success 200 {object} extendedUser
 // @Security Bearer
 // @Router /user [get]
@@ -60,7 +60,7 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 // @Description Returns user by ID
 // @Tags user
 // @ID get-user-by-id
-// @Produce  json
+// @Produce json
 // @Param id path int true "User ID"
 // @Success 200 {object} extendedUser
 // @Security Bearer

@@ -18,15 +18,17 @@ func NewDonationHandler(m models.DonationImpl) *DonationHandler {
 	return &DonationHandler{DonationModel: m}
 }
 
-// type createRequest struct {
-// 	ProjectID uint `json:"project"`
-// 	Payment   uint `json:"payment"`
-// }
+// DonationCreateRequest ...
+type DonationCreateRequest struct {
+	ProjectID int `json:"project"`
+	Payment   int `json:"payment"`
+}
 
-// type updateRequest struct {
-// 	Paid    bool `json:"paid,omitempty"`
-// 	Payment uint `json:"payment,omitempty"`
-// }
+// DonationUpdateRequest ...
+type DonationUpdateRequest struct {
+	Paid    bool `json:"paid,omitempty"`
+	Payment int  `json:"payment,omitempty"`
+}
 
 // ProjectDonation for project donations response
 type ProjectDonation struct {
@@ -41,7 +43,7 @@ type ProjectDonation struct {
 // @Description Returns list of user's donations
 // @Tags donation
 // @ID get-user-donations
-// @Produce  json
+// @Produce json
 // @Success 200 {object} []models.Donation
 // @Security Bearer
 // @Router /donation [get]
@@ -63,10 +65,11 @@ func (h *DonationHandler) GetUserDonations(c echo.Context) error {
 // @Description Returns list of project donations
 // @Tags donation
 // @ID get-project-donations
-// @Produce  json
+// @Produce json
+// @Param id path int true "Project ID"
 // @Success 200 {object} []ProjectDonation
 // @Security Bearer
-// @Router /donation/project [get]
+// @Router /donation/project/{id} [get]
 func (h *DonationHandler) GetProjectDonations(c echo.Context) error {
 	intID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -89,103 +92,98 @@ func (h *DonationHandler) GetProjectDonations(c echo.Context) error {
 	return c.JSON(http.StatusOK, projectDonations)
 }
 
-// // CreateDonation return list of users
-// func CreateDonation(c echo.Context) error {
-// 	request := new(createRequest)
-// 	if err := c.Bind(request); err != nil {
-// 		return c.JSON(http.StatusBadRequest, nil)
-// 	}
-// 	dbClient := db.GetDbClient()
-// 	var project db.Project
+// CreateDonation godoc
+// @Summary Create donation
+// @Description Create new donation
+// @Tags donation
+// @ID post-donation
+// @Accept json
+// @Produce json
+// @Param request body DonationCreateRequest true "Request body"
+// @Success 200 {object} models.Donation
+// @Security Bearer
+// @Router /donation [post]
+func (h *DonationHandler) CreateDonation(c echo.Context) error {
+	request := new(DonationCreateRequest)
+	if err := c.Bind(request); err != nil {
+		return c.JSON(http.StatusBadRequest, nil)
+	}
+	userID, err := getUserIDFromToken(c.Get("user"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err)
+	}
+	donation := &models.Donation{
+		UserID:    userID,
+		ProjectID: request.ProjectID,
+		Payment:   request.Payment,
+	}
+	err = h.DonationModel.Create(donation)
+	//TODO switch by err type
+	if err != nil {
+		return c.JSON(http.StatusForbidden, nil)
+	}
 
-// 	if err := dbClient.First(&project, request.ProjectID).Error; gorm.IsRecordNotFoundError(err) {
-// 		return c.JSON(http.StatusBadRequest, nil)
-// 	}
-// 	if project.Closed || project.Locked || !project.Published {
-// 		return c.JSON(http.StatusBadRequest, nil)
-// 	}
+	return c.JSON(http.StatusOK, donation)
+}
 
-// 	userToken := c.Get("user").(*jwt.Token)
-// 	claims := userToken.Claims.(jwt.MapClaims)
-// 	userID := claims["id"].(float64)
+// DeleteDonation godoc
+// @Summary Delete not locked donation
+// @Description Delete not locked donation
+// @Tags donation
+// @ID delete-donation
+// @Param id path int true "Donation ID"
+// @Success 204
+// @Security Bearer
+// @Router /donation/{id} [delete]
+func (h *DonationHandler) DeleteDonation(c echo.Context) error {
+	donationID, _ := strconv.Atoi(c.Param("id"))
+	userID, err := getUserIDFromToken(c.Get("user"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, errorResponse("wrong ID"))
+	}
+	err = h.DonationModel.Delete(donationID, userID)
+	//TODO switch by err type
+	if err != nil {
+		return c.JSON(http.StatusForbidden, nil)
+	}
 
-// 	var donationCount uint
-// 	dbClient.Model(&db.Donation{}).Where("project_id = ? AND user_id = ?", request.ProjectID, uint(userID)).Count(&donationCount)
-// 	if donationCount > 0 {
-// 		return c.JSON(http.StatusForbidden, nil)
-// 	}
-// 	newDonation := db.Donation{
-// 		ProjectID: request.ProjectID,
-// 		Payment: request.Payment,
-// 		UserID: uint(userID),
-// 	}
-// 	dbClient.Create(&newDonation)
-// 	ch := misc.GetRecalcPipe()
-// 	ch <- newDonation.ProjectID
+	return c.NoContent(http.StatusNoContent)
+}
 
-// 	return c.JSON(http.StatusOK, newDonation)
-// }
+// UpdateDonation godoc
+// @Summary Update not locked donation
+// @Description Update not locked donation
+// @Tags donation
+// @ID update-donation
+// @Accept json
+// @Produce json
+// @Param request body DonationUpdateRequest true "Request body"
+// @Param id path int true "Donation ID"
+// @Success 200 {object} models.Donation
+// @Security Bearer
+// @Router /donation/{id} [patch]
+func (h *DonationHandler) UpdateDonation(c echo.Context) error {
+	request := new(DonationUpdateRequest)
+	if err := c.Bind(request); err != nil {
+		return c.JSON(http.StatusBadRequest, nil)
+	}
+	userID, err := getUserIDFromToken(c.Get("user"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err)
+	}
+	donationID, _ := strconv.Atoi(c.Param("id"))
 
-// // DeleteDonation delete not locked donation
-// func DeleteDonation(c echo.Context) error {
-// 	idParam := c.Param("id")
-// 	donationID, _ := strconv.Atoi(idParam)
+	donation := &models.Donation{
+		ID:      donationID,
+		UserID:  userID,
+		Paid:    request.Paid,
+		Payment: request.Payment,
+	}
+	err = h.DonationModel.Update(donation)
+	//TODO switch by err type
+	if err != nil {
+		return c.JSON(http.StatusForbidden, nil)
+	}
 
-// 	dbClient := db.GetDbClient()
-// 	var donation db.Donation
-
-// 	if err := dbClient.Preload("User").First(&donation, donationID).Error; gorm.IsRecordNotFoundError(err) {
-// 		return c.JSON(http.StatusNotFound, nil)
-// 	}
-
-// 	userToken := c.Get("user").(*jwt.Token)
-// 	claims := userToken.Claims.(jwt.MapClaims)
-// 	userID := claims["id"].(float64)
-
-// 	if donation.Locked || donation.User.ID != uint(userID) {
-// 		return c.JSON(http.StatusForbidden, nil)
-// 	}
-// 	dbClient.Delete(&donation)
-// 	ch := misc.GetRecalcPipe()
-// 	ch <- donation.ProjectID
-
-// 	return c.JSON(http.StatusNoContent, nil)
-// }
-
-// // UpdateDonation update not locked donation
-// func UpdateDonation(c echo.Context) error {
-// 	request := new(updateRequest)
-// 	if err := c.Bind(request); err != nil {
-// 		return c.JSON(http.StatusBadRequest, nil)
-// 	}
-// 	idParam := c.Param("id")
-// 	donationID, _ := strconv.Atoi(idParam)
-
-// 	dbClient := db.GetDbClient()
-// 	var donation db.Donation
-
-// 	if err := dbClient.Preload("Project").Preload("User").First(&donation, donationID).Error; gorm.IsRecordNotFoundError(err) {
-// 		return c.JSON(http.StatusNotFound, nil)
-// 	}
-
-// 	userToken := c.Get("user").(*jwt.Token)
-// 	claims := userToken.Claims.(jwt.MapClaims)
-// 	userID := claims["id"].(float64)
-
-// 	if donation.Locked && donation.Project.OwnerID == uint(userID) {
-// 		dbClient.Model(&donation).Update("paid", request.Paid)
-// 		ch := misc.GetHarvestPipe()
-// 		ch <- donation.ProjectID
-
-// 		return c.JSON(http.StatusOK, donation)
-// 	}
-// 	if !donation.Locked && donation.User.ID == uint(userID) {
-// 		dbClient.Model(&donation).Update("payment", request.Payment)
-// 		ch := misc.GetRecalcPipe()
-// 		ch <- donation.ProjectID
-
-// 		return c.JSON(http.StatusOK, donation)
-// 	}
-
-// 	return c.JSON(http.StatusForbidden, nil)
-// }
+	return c.JSON(http.StatusOK, donation)
+}

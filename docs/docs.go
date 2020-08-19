@@ -84,9 +84,47 @@ var doc = `{
                         }
                     }
                 }
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Create new donation",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "donation"
+                ],
+                "summary": "Create donation",
+                "operationId": "post-donation",
+                "parameters": [
+                    {
+                        "description": "Request body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.DonationCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Donation"
+                        }
+                    }
+                }
             }
         },
-        "/donation/project": {
+        "/donation/project/{id}": {
             "get": {
                 "security": [
                     {
@@ -102,6 +140,15 @@ var doc = `{
                 ],
                 "summary": "Returns list of project donations",
                 "operationId": "get-project-donations",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Project ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -110,6 +157,78 @@ var doc = `{
                             "items": {
                                 "$ref": "#/definitions/handlers.ProjectDonation"
                             }
+                        }
+                    }
+                }
+            }
+        },
+        "/donation/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Delete not locked donation",
+                "tags": [
+                    "donation"
+                ],
+                "summary": "Delete not locked donation",
+                "operationId": "delete-donation",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Donation ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {}
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Update not locked donation",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "donation"
+                ],
+                "summary": "Update not locked donation",
+                "operationId": "update-donation",
+                "parameters": [
+                    {
+                        "description": "Request body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.DonationUpdateRequest"
+                        }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Donation ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Donation"
                         }
                     }
                 }
@@ -203,6 +322,56 @@ var doc = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/handlers.ProjectListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/project/user/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Returns list of projects associated with user with filters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "project"
+                ],
+                "summary": "Returns list of projects associated with user",
+                "operationId": "get-user-projects",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "description": "Return projects where user is owner",
+                        "name": "owned",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Return projects where user is contributor",
+                        "name": "contributed",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handlers.ProjectListView"
+                            }
                         }
                     }
                 }
@@ -335,6 +504,28 @@ var doc = `{
         }
     },
     "definitions": {
+        "handlers.DonationCreateRequest": {
+            "type": "object",
+            "properties": {
+                "payment": {
+                    "type": "integer"
+                },
+                "project": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handlers.DonationUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "paid": {
+                    "type": "boolean"
+                },
+                "payment": {
+                    "type": "integer"
+                }
+            }
+        },
         "handlers.ProjectDetailView": {
             "type": "object",
             "properties": {

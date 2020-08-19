@@ -46,8 +46,8 @@ func NewAuthHandler(s string, u models.UserImpl, p auth.Provider, c clockwork.Cl
 // @Description get token for user
 // @Tags auth
 // @ID get-token
-// @Accept  json
-// @Produce  json
+// @Accept json
+// @Produce json
 // @Param request body TokenRequest true "Request body"
 // @Success 200 {object} TokenResponse
 // @Router /login [post]

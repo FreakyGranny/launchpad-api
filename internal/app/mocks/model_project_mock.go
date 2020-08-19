@@ -64,10 +64,10 @@ func (mr *MockProjectImplMockRecorder) GetProjectsWithPagination(f interface{}) 
 }
 
 // GetUserProjects mocks base method
-func (m *MockProjectImpl) GetUserProjects(f *models.ProjectUserFilter) ([]models.Project, error) {
+func (m *MockProjectImpl) GetUserProjects(f *models.ProjectUserFilter) (*[]models.Project, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserProjects", f)
-	ret0, _ := ret[0].([]models.Project)
+	ret0, _ := ret[0].(*[]models.Project)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

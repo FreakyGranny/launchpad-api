@@ -40,7 +40,7 @@ func (s *LoginSuite) TearDownTest() {
 }
 
 func (s *LoginSuite) buildRequest(code string) (*http.Request, error) {
-	body, err := json.Marshal(map[string]string{"code": code})
+	body, err := json.Marshal(TokenRequest{Code: code})
 	if err != nil {
 		return nil, err
 	}

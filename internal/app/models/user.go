@@ -4,7 +4,7 @@ import (
 	"github.com/go-pg/pg/v10"
 )
 
-//go:generate mockgen -source=$GOFILE -destination=../mocks/model_user_mock.go -package=mocks . UserImpl
+//go:generate mockgen -source=$GOFILE -destination=../mocks/model_user_mock.go -package=mocks UserImpl
 
 // UserImpl ...
 type UserImpl interface {

@@ -4,7 +4,7 @@ import (
 	"github.com/go-pg/pg/v10"
 )
 
-//go:generate mockgen -source=$GOFILE -destination=../mocks/model_category_mock.go -package=mocks . CategoryImpl
+//go:generate mockgen -source=$GOFILE -destination=../mocks/model_category_mock.go -package=mocks CategoryImpl
 
 // CategoryImpl ...
 type CategoryImpl interface {

@@ -85,7 +85,7 @@ func NewProjectHandler(m models.ProjectImpl) *ProjectHandler {
 // @Description Returns list of projects with filters
 // @Tags project
 // @ID get-projects
-// @Produce  json
+// @Produce json
 // @Param page query int false "Page num"
 // @Param page_size query int false "Capasity of one page"
 // @Param category query int false "Category ID"
@@ -95,11 +95,6 @@ func NewProjectHandler(m models.ProjectImpl) *ProjectHandler {
 // @Security Bearer
 // @Router /project [get]
 func (h *ProjectHandler) GetProjects(c echo.Context) error {
-	// userID, err := getUserIDFromToken(c.Get("user"))
-	// if err != nil {
-	// 	return c.JSON(http.StatusBadRequest, err)
-	// }
-
 	categoryInt, _ := strconv.Atoi(c.QueryParam("category"))
 	typeInt, _ := strconv.Atoi(c.QueryParam("type"))
 	onlyOpen, _ := strconv.ParseBool(c.QueryParam("open"))
@@ -149,12 +144,10 @@ func (h *ProjectHandler) GetProjects(c echo.Context) error {
 			Category:    project.Category,
 			ProjectType: project.ProjectType,
 		}
-
 		if !project.EventDate.IsZero() {
 			ed := project.EventDate.Format(dateTimeLayout)
 			plv.EventDate = &ed
 		}
-
 		projectListEntries = append(projectListEntries, plv)
 	}
 
@@ -165,12 +158,68 @@ func (h *ProjectHandler) GetProjects(c echo.Context) error {
 	})
 }
 
+// GetUserProjects godoc
+// @Summary Returns list of projects associated with user
+// @Description Returns list of projects associated with user with filters
+// @Tags project
+// @ID get-user-projects
+// @Produce json
+// @Param owned query bool false "Return projects where user is owner"
+// @Param contributed query bool false "Return projects where user is contributor"
+// @Param id path int true "User ID"
+// @Success 200 {object} []ProjectListView
+// @Security Bearer
+// @Router /project/user/{id} [get]
+func (h *ProjectHandler) GetUserProjects(c echo.Context) error {
+	userID, _ := strconv.Atoi(c.Param("id"))
+	onlyOwned, _ := strconv.ParseBool(c.QueryParam("owned"))
+	onlyContributed, _ := strconv.ParseBool(c.QueryParam("contributed"))
+
+	pFilter := &models.ProjectUserFilter{
+		UserID:      userID,
+		Contributed: onlyContributed,
+		Owned:       onlyOwned,
+	}
+
+	projects, err := h.ProjectModel.GetUserProjects(pFilter)
+
+	projectListEntries := make([]ProjectListView, 0)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+	for _, project := range *projects {
+		// strategy, err := misc.GetStrategy(project.ProjectType)
+		// if err != nil {
+		// 	return c.JSON(http.StatusInternalServerError, nil)
+		// }
+		plv := ProjectListView{
+			ID:          project.ID,
+			Title:       project.Title,
+			SubTitle:    project.SubTitle,
+			Status:      project.Status(),
+			ReleaseDate: project.ReleaseDate.Format(dateLayout),
+			ImageLink:   project.ImageLink,
+			Total:       project.Total,
+			// Percent: strategy.Percent(&project),
+			Category:    project.Category,
+			ProjectType: project.ProjectType,
+		}
+		if !project.EventDate.IsZero() {
+			ed := project.EventDate.Format(dateTimeLayout)
+			plv.EventDate = &ed
+		}
+		projectListEntries = append(projectListEntries, plv)
+	}
+
+	return c.JSON(http.StatusOK, projectListEntries)
+}
+
 // GetSingleProject godoc
 // @Summary Show a single project
 // @Description Returns project by ID
 // @Tags project
 // @ID get-project-by-id
-// @Produce  json
+// @Produce json
 // @Param id path int true "Project ID"
 // @Success 200 {object} ProjectDetailView
 // @Security Bearer

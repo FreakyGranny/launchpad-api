@@ -1,5 +1,19 @@
 basePath: /
 definitions:
+  handlers.DonationCreateRequest:
+    properties:
+      payment:
+        type: integer
+      project:
+        type: integer
+    type: object
+  handlers.DonationUpdateRequest:
+    properties:
+      paid:
+        type: boolean
+      payment:
+        type: integer
+    type: object
   handlers.ProjectDetailView:
     properties:
       category:
@@ -229,10 +243,86 @@ paths:
       summary: Returns list of user's donations
       tags:
       - donation
-  /donation/project:
+    post:
+      consumes:
+      - application/json
+      description: Create new donation
+      operationId: post-donation
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.DonationCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Donation'
+      security:
+      - Bearer: []
+      summary: Create donation
+      tags:
+      - donation
+  /donation/{id}:
+    delete:
+      description: Delete not locked donation
+      operationId: delete-donation
+      parameters:
+      - description: Donation ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204": {}
+      security:
+      - Bearer: []
+      summary: Delete not locked donation
+      tags:
+      - donation
+    patch:
+      consumes:
+      - application/json
+      description: Update not locked donation
+      operationId: update-donation
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.DonationUpdateRequest'
+      - description: Donation ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Donation'
+      security:
+      - Bearer: []
+      summary: Update not locked donation
+      tags:
+      - donation
+  /donation/project/{id}:
     get:
       description: Returns list of project donations
       operationId: get-project-donations
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
@@ -327,6 +417,38 @@ paths:
       security:
       - Bearer: []
       summary: Show a single project
+      tags:
+      - project
+  /project/user/{id}:
+    get:
+      description: Returns list of projects associated with user with filters
+      operationId: get-user-projects
+      parameters:
+      - description: Return projects where user is owner
+        in: query
+        name: owned
+        type: boolean
+      - description: Return projects where user is contributor
+        in: query
+        name: contributed
+        type: boolean
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.ProjectListView'
+            type: array
+      security:
+      - Bearer: []
+      summary: Returns list of projects associated with user
       tags:
       - project
   /project_type:

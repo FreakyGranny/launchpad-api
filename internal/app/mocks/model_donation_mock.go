@@ -62,3 +62,45 @@ func (mr *MockDonationImplMockRecorder) GetAllByProject(id interface{}) *gomock.
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllByProject", reflect.TypeOf((*MockDonationImpl)(nil).GetAllByProject), id)
 }
+
+// Create mocks base method
+func (m *MockDonationImpl) Create(d *models.Donation) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Create", d)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Create indicates an expected call of Create
+func (mr *MockDonationImplMockRecorder) Create(d interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDonationImpl)(nil).Create), d)
+}
+
+// Update mocks base method
+func (m *MockDonationImpl) Update(d *models.Donation) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Update", d)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Update indicates an expected call of Update
+func (mr *MockDonationImplMockRecorder) Update(d interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockDonationImpl)(nil).Update), d)
+}
+
+// Delete mocks base method
+func (m *MockDonationImpl) Delete(id, userID int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", id, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete
+func (mr *MockDonationImplMockRecorder) Delete(id, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockDonationImpl)(nil).Delete), id, userID)
+}

@@ -4,7 +4,7 @@ import (
 	"github.com/go-pg/pg/v10"
 )
 
-//go:generate mockgen -source=$GOFILE -destination=../mocks/model_p_type_mock.go -package=mocks . ProjectTypeImpl
+//go:generate mockgen -source=$GOFILE -destination=../mocks/model_p_type_mock.go -package=mocks ProjectTypeImpl
 
 // ProjectTypeImpl ...
 type ProjectTypeImpl interface {

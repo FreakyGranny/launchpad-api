@@ -84,7 +84,7 @@ func API(cmd *cobra.Command, args []string) {
 	p := e.Group("/project")
 	// p.Use(JWTmiddleware)
 	p.GET("", hp.GetProjects)
-	// p.GET("/user", hp.GetUserProjects)
+	p.GET("/user/:id", hp.GetUserProjects)
 	p.GET("/:id", hp.GetSingleProject)
 	// p.POST("", api.CreateProject)
 	// p.PATCH("/:id", api.UpdateProject)
@@ -95,9 +95,9 @@ func API(cmd *cobra.Command, args []string) {
 	dg.Use(JWTmiddleware)
 	dg.GET("", hd.GetUserDonations)
 	dg.GET("/project/:id", hd.GetProjectDonations)
-	// d.POST("", api.CreateDonation)
-	// d.DELETE("/:id", api.DeleteDonation)
-	// d.PATCH("/:id", api.UpdateDonation)
+	dg.POST("", hd.CreateDonation)
+	dg.DELETE("/:id", hd.DeleteDonation)
+	dg.PATCH("/:id", hd.UpdateDonation)
 
 	// misc.BackgroundInit()
 

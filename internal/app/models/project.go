@@ -7,7 +7,7 @@ import (
 	"github.com/go-pg/pg/v10/orm"
 )
 
-//go:generate mockgen -source=$GOFILE -destination=../mocks/model_project_mock.go -package=mocks . ProjectImpl
+//go:generate mockgen -source=$GOFILE -destination=../mocks/model_project_mock.go -package=mocks .
 
 const (
 	// StatusDraft draft project
@@ -26,7 +26,7 @@ const (
 type ProjectImpl interface {
 	Get(id int) (*Project, bool)
 	GetProjectsWithPagination(f *ProjectListFilter) (ProjectPaginatorImpl, error)
-	GetUserProjects(f *ProjectUserFilter) ([]Project, error)
+	GetUserProjects(f *ProjectUserFilter) (*[]Project, error)
 }
 
 // Project model
@@ -177,7 +177,7 @@ func (r *ProjectRepo) GetProjectsWithPagination(f *ProjectListFilter) (ProjectPa
 }
 
 // GetUserProjects ...
-func (r *ProjectRepo) GetUserProjects(f *ProjectUserFilter) ([]Project, error) {
+func (r *ProjectRepo) GetUserProjects(f *ProjectUserFilter) (*[]Project, error) {
 	projects := []Project{}
 	q := r.db.Model(&projects).Relation("Category").Relation("ProjectType")
 	if f.UserID != 0 {
@@ -189,12 +189,12 @@ func (r *ProjectRepo) GetUserProjects(f *ProjectUserFilter) ([]Project, error) {
 	if f.Contributed {
 		q = filterQueryByContribution(q, f.UserID)
 	}
-	err := q.Select()
+	err := q.Limit(20).Order("id DESC").Select()
 	if err != nil {
 		return nil, err
 	}
 
-	return projects, nil
+	return &projects, nil
 }
 
 func filterQueryByContribution(q *orm.Query, userID int) *orm.Query {
