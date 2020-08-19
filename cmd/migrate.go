@@ -33,8 +33,10 @@ func NewMigrateCmd() *cobra.Command {
 }
 // Migrate ...
 func Migrate(cmd *cobra.Command, args []string) {
-	cfg := config.New()
-
+	cfg, err := config.New()
+	if err != nil {
+		log.Fatal(err)
+	}
 	d, err := db.Connect(&cfg.Db)
 	if err != nil {
 		log.Fatal(err)

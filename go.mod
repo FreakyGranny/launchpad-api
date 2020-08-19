@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
+	github.com/caarlos0/env/v6 v6.3.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-pg/migrations/v8 v8.0.0-beta.1
 	github.com/go-pg/pg/v10 v10.0.0-beta.9

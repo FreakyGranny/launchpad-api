@@ -31,7 +31,10 @@ import (
 
 // API ...
 func API(cmd *cobra.Command, args []string) {
-	cfg := config.New()
+	cfg, err := config.New()
+	if err != nil {
+		log.Fatal(err)
+	}
 	if cfg.DebugMode {
 		log.SetLevel(log.DEBUG)
 	}
