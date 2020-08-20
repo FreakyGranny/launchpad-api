@@ -57,6 +57,8 @@ func (s *ProjectSuite) makeProjectList() *[]models.Project {
 			},
 			ProjectType: models.ProjectType{
 				ID: 1,
+				GoalByAmount: true,
+				EndByGoalGain: true,
 			},
 		},
 		{
@@ -71,6 +73,8 @@ func (s *ProjectSuite) makeProjectList() *[]models.Project {
 			},
 			ProjectType: models.ProjectType{
 				ID: 2,
+				GoalByPeople: true,
+				EndByGoalGain: true,
 			},
 		},
 	}
@@ -100,6 +104,16 @@ func (s *ProjectSuite) TestGetSingleProject() {
 			FirstName: "John",
 			LastName:  "Doe",
 		},
+		Category: models.Category{
+			ID: 1,
+		},
+		ProjectType: models.ProjectType{
+			ID: 1,
+			GoalByAmount: true,
+			EndByGoalGain: true,
+		},
+		Total: 344,
+		GoalAmount: 1000,
 	}
 
 	s.mockProject.EXPECT().Get(1).Return(project, true)
@@ -107,7 +121,7 @@ func (s *ProjectSuite) TestGetSingleProject() {
 	s.Require().NoError(h.GetSingleProject(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
 
-	var pJSON = `{"id":1,"title":"Title","subtitle":"Subtitle","status":"search","release_date":"0001-01-01","event_date":null,"image_link":"","total":0,"percent":0,"category":{"id":0,"alias":"","name":""},"project_type":{"id":0,"alias":"","name":"","options":null,"goal_by_people":false,"goal_by_amount":false,"end_by_goal_gain":false},"goal_people":0,"goal_amount":0,"description":"","instructions":"","owner":{"id":1,"username":"","first_name":"John","last_name":"Doe","avatar":"","project_count":0,"success_rate":0}}`
+	var pJSON = `{"id":1,"title":"Title","subtitle":"Subtitle","status":"search","release_date":"0001-01-01","event_date":null,"image_link":"","total":344,"percent":34,"category":{"id":1,"alias":"","name":""},"project_type":{"id":1,"alias":"","name":"","options":null,"goal_by_people":false,"goal_by_amount":true,"end_by_goal_gain":true},"goal_people":0,"goal_amount":1000,"description":"","instructions":"","owner":{"id":1,"username":"","first_name":"John","last_name":"Doe","avatar":"","project_count":0,"success_rate":0}}`
 
 	s.Require().Equal(pJSON, strings.Trim(rec.Body.String(), "\n"))
 }
@@ -145,7 +159,7 @@ func (s *ProjectSuite) TestGetProjectsWithPagination() {
 	s.Require().NoError(h.GetProjects(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
 
-	var pJSON = `{"results":[{"id":1,"title":"Title","subtitle":"Subtitle","status":"success","release_date":"0001-01-01","event_date":null,"image_link":"","total":0,"percent":0,"category":{"id":1,"alias":"","name":""},"project_type":{"id":1,"alias":"","name":"","options":null,"goal_by_people":false,"goal_by_amount":false,"end_by_goal_gain":false}},{"id":2,"title":"Second Project","subtitle":"2 Subtitle","status":"success","release_date":"0001-01-01","event_date":null,"image_link":"","total":0,"percent":0,"category":{"id":2,"alias":"","name":""},"project_type":{"id":2,"alias":"","name":"","options":null,"goal_by_people":false,"goal_by_amount":false,"end_by_goal_gain":false}}],"next":0,"has_next":false}`
+	var pJSON = `{"results":[{"id":1,"title":"Title","subtitle":"Subtitle","status":"success","release_date":"0001-01-01","event_date":null,"image_link":"","total":0,"percent":0,"category":{"id":1,"alias":"","name":""},"project_type":{"id":1,"alias":"","name":"","options":null,"goal_by_people":false,"goal_by_amount":true,"end_by_goal_gain":true}},{"id":2,"title":"Second Project","subtitle":"2 Subtitle","status":"success","release_date":"0001-01-01","event_date":null,"image_link":"","total":0,"percent":0,"category":{"id":2,"alias":"","name":""},"project_type":{"id":2,"alias":"","name":"","options":null,"goal_by_people":true,"goal_by_amount":false,"end_by_goal_gain":true}}],"next":0,"has_next":false}`
 
 	s.Require().Equal(pJSON, strings.Trim(rec.Body.String(), "\n"))
 }
@@ -173,7 +187,7 @@ func (s *ProjectSuite) TestGetUserProjects() {
 	s.Require().NoError(h.GetUserProjects(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
 
-	var pJSON = `[{"id":1,"title":"Title","subtitle":"Subtitle","status":"success","release_date":"0001-01-01","event_date":null,"image_link":"","total":0,"percent":0,"category":{"id":1,"alias":"","name":""},"project_type":{"id":1,"alias":"","name":"","options":null,"goal_by_people":false,"goal_by_amount":false,"end_by_goal_gain":false}},{"id":2,"title":"Second Project","subtitle":"2 Subtitle","status":"success","release_date":"0001-01-01","event_date":null,"image_link":"","total":0,"percent":0,"category":{"id":2,"alias":"","name":""},"project_type":{"id":2,"alias":"","name":"","options":null,"goal_by_people":false,"goal_by_amount":false,"end_by_goal_gain":false}}]`
+	var pJSON = `[{"id":1,"title":"Title","subtitle":"Subtitle","status":"success","release_date":"0001-01-01","event_date":null,"image_link":"","total":0,"percent":0,"category":{"id":1,"alias":"","name":""},"project_type":{"id":1,"alias":"","name":"","options":null,"goal_by_people":false,"goal_by_amount":true,"end_by_goal_gain":true}},{"id":2,"title":"Second Project","subtitle":"2 Subtitle","status":"success","release_date":"0001-01-01","event_date":null,"image_link":"","total":0,"percent":0,"category":{"id":2,"alias":"","name":""},"project_type":{"id":2,"alias":"","name":"","options":null,"goal_by_people":true,"goal_by_amount":false,"end_by_goal_gain":true}}]`
 
 	s.Require().Equal(pJSON, strings.Trim(rec.Body.String(), "\n"))
 }

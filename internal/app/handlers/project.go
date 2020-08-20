@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/FreakyGranny/launchpad-api/internal/app/misc"
 	"github.com/FreakyGranny/launchpad-api/internal/app/models"
 	"github.com/labstack/echo/v4"
 )
@@ -128,10 +129,10 @@ func (h *ProjectHandler) GetProjects(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 	for _, project := range *projects {
-		// strategy, err := misc.GetStrategy(project.ProjectType)
-		// if err != nil {
-		// 	return c.JSON(http.StatusInternalServerError, nil)
-		// }
+		strategy, err := misc.GetStrategy(&project.ProjectType, h.ProjectModel)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, nil)
+		}
 		plv := ProjectListView{
 			ID:          project.ID,
 			Title:       project.Title,
@@ -140,7 +141,7 @@ func (h *ProjectHandler) GetProjects(c echo.Context) error {
 			ReleaseDate: project.ReleaseDate.Format(dateLayout),
 			ImageLink:   project.ImageLink,
 			Total:       project.Total,
-			// Percent: strategy.Percent(&project),
+			Percent:     strategy.Percent(&project),
 			Category:    project.Category,
 			ProjectType: project.ProjectType,
 		}
@@ -188,10 +189,10 @@ func (h *ProjectHandler) GetUserProjects(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 	for _, project := range *projects {
-		// strategy, err := misc.GetStrategy(project.ProjectType)
-		// if err != nil {
-		// 	return c.JSON(http.StatusInternalServerError, nil)
-		// }
+		strategy, err := misc.GetStrategy(&project.ProjectType, h.ProjectModel)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, nil)
+		}
 		plv := ProjectListView{
 			ID:          project.ID,
 			Title:       project.Title,
@@ -200,7 +201,7 @@ func (h *ProjectHandler) GetUserProjects(c echo.Context) error {
 			ReleaseDate: project.ReleaseDate.Format(dateLayout),
 			ImageLink:   project.ImageLink,
 			Total:       project.Total,
-			// Percent: strategy.Percent(&project),
+			Percent:     strategy.Percent(&project),
 			Category:    project.Category,
 			ProjectType: project.ProjectType,
 		}
@@ -232,20 +233,20 @@ func (h *ProjectHandler) GetSingleProject(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, nil)
 	}
 
-	// strategy, err := misc.GetStrategy(project.ProjectType)
-	// if err != nil {
-	// 	return c.JSON(http.StatusInternalServerError, nil)
-	// }
+	strategy, err := misc.GetStrategy(&project.ProjectType, h.ProjectModel)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, nil)
+	}
 
 	projectResponse := ProjectDetailView{
-		ID:          project.ID,
-		Title:       project.Title,
-		SubTitle:    project.SubTitle,
-		Status:      project.Status(),
-		ReleaseDate: project.ReleaseDate.Format(dateLayout),
-		ImageLink:   project.ImageLink,
-		Total:       project.Total,
-		// Percent:      strategy.Percent(&project),
+		ID:           project.ID,
+		Title:        project.Title,
+		SubTitle:     project.SubTitle,
+		Status:       project.Status(),
+		ReleaseDate:  project.ReleaseDate.Format(dateLayout),
+		ImageLink:    project.ImageLink,
+		Total:        project.Total,
+		Percent:      strategy.Percent(project),
 		Category:     project.Category,
 		ProjectType:  project.ProjectType,
 		GoalPeople:   project.GoalPeople,
