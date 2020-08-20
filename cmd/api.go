@@ -82,13 +82,13 @@ func API(cmd *cobra.Command, args []string) {
 
 	hp := handlers.NewProjectHandler(models.NewProjectModel(d))
 	p := e.Group("/project")
-	// p.Use(JWTmiddleware)
+	p.Use(JWTmiddleware)
 	p.GET("", hp.GetProjects)
 	p.GET("/user/:id", hp.GetUserProjects)
 	p.GET("/:id", hp.GetSingleProject)
-	// p.POST("", api.CreateProject)
-	// p.PATCH("/:id", api.UpdateProject)
-	// p.DELETE("/:id", api.DeleteProject)
+	p.POST("", hp.CreateProject)
+	p.PATCH("/:id", hp.UpdateProject)
+	p.DELETE("/:id", hp.DeleteProject)
 
 	hd := handlers.NewDonationHandler(models.NewDonationModel(d))
 	dg := e.Group("/donation")

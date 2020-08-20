@@ -123,7 +123,7 @@ func (h *DonationHandler) CreateDonation(c echo.Context) error {
 		return c.JSON(http.StatusForbidden, nil)
 	}
 
-	return c.JSON(http.StatusOK, donation)
+	return c.JSON(http.StatusCreated, donation)
 }
 
 // DeleteDonation godoc

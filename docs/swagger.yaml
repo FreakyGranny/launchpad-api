@@ -14,6 +14,11 @@ definitions:
       payment:
         type: integer
     type: object
+  handlers.ProjectCreateResponse:
+    properties:
+      id:
+        type: integer
+    type: object
   handlers.ProjectDetailView:
     properties:
       category:
@@ -397,7 +402,47 @@ paths:
       summary: Returns list of projects
       tags:
       - project
+    post:
+      consumes:
+      - application/json
+      description: Create new project
+      operationId: post-project
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.DonationCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ProjectCreateResponse'
+      security:
+      - Bearer: []
+      summary: Create project
+      tags:
+      - project
   /project/{id}:
+    delete:
+      description: Delete not published project
+      operationId: delete-project
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204": {}
+      security:
+      - Bearer: []
+      summary: Delete not published project
+      tags:
+      - project
     get:
       description: Returns project by ID
       operationId: get-project-by-id

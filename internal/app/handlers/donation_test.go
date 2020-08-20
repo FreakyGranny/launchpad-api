@@ -122,10 +122,11 @@ func (s *DonationSuite) TestGetUserDonations() {
 }
 
 func (s *DonationSuite) TestCreateDonation() {
-	body, err := json.Marshal(DonationCreateRequest{
+	reqStruct := DonationCreateRequest{
 		ProjectID: 10,
 		Payment:   100,
-	})
+	}
+	body, err := json.Marshal(reqStruct)
 	if err != nil {
 		s.T().Fail()
 	}
@@ -144,13 +145,13 @@ func (s *DonationSuite) TestCreateDonation() {
 
 	h := NewDonationHandler(s.mockDonation)
 	donation := models.Donation{
-		Payment:   100,
-		ProjectID: 10,
+		Payment:   reqStruct.Payment,
+		ProjectID: reqStruct.ProjectID,
 		UserID:    111,
 	}
 	s.mockDonation.EXPECT().Create(&donation).Return(nil)
 	s.Require().NoError(h.CreateDonation(c))
-	s.Require().Equal(http.StatusOK, rec.Code)
+	s.Require().Equal(http.StatusCreated, rec.Code)
 
 	var pDonationsJSON = `{"id":0,"payment":100,"locked":false,"paid":false,"project":10}`
 

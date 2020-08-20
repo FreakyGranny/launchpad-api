@@ -78,6 +78,48 @@ func (mr *MockProjectImplMockRecorder) GetUserProjects(f interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserProjects", reflect.TypeOf((*MockProjectImpl)(nil).GetUserProjects), f)
 }
 
+// Create mocks base method
+func (m *MockProjectImpl) Create(d *models.Project) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Create", d)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Create indicates an expected call of Create
+func (mr *MockProjectImplMockRecorder) Create(d interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockProjectImpl)(nil).Create), d)
+}
+
+// Update mocks base method
+func (m *MockProjectImpl) Update(d *models.Project) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Update", d)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Update indicates an expected call of Update
+func (mr *MockProjectImplMockRecorder) Update(d interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockProjectImpl)(nil).Update), d)
+}
+
+// Delete mocks base method
+func (m *MockProjectImpl) Delete(id, userID int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", id, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete
+func (mr *MockProjectImplMockRecorder) Delete(id, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockProjectImpl)(nil).Delete), id, userID)
+}
+
 // MockProjectPaginatorImpl is a mock of ProjectPaginatorImpl interface
 type MockProjectPaginatorImpl struct {
 	ctrl     *gomock.Controller

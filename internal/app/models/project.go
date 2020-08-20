@@ -27,6 +27,9 @@ type ProjectImpl interface {
 	Get(id int) (*Project, bool)
 	GetProjectsWithPagination(f *ProjectListFilter) (ProjectPaginatorImpl, error)
 	GetUserProjects(f *ProjectUserFilter) (*[]Project, error)
+	Create(p *Project) error
+	Update(p *Project) error
+	Delete(id int, userID int) error
 }
 
 // Project model
@@ -87,7 +90,6 @@ type ProjectUserFilter struct {
 	Contributed bool
 	Owned       bool
 }
-
 
 // ProjectPaginatorImpl ...
 type ProjectPaginatorImpl interface {
@@ -202,4 +204,32 @@ func filterQueryByContribution(q *orm.Query, userID int) *orm.Query {
 	// 	query = query.Where("id IN (?)", dbClient.Table("donations").Select("project_id").Where("user_id = ?", userID).SubQuery())
 
 	return query
+}
+
+// Create new project
+func (r *ProjectRepo) Create(p *Project) error {
+
+	return nil
+}
+
+// Update new project
+func (r *ProjectRepo) Update(p *Project) error {
+
+	return nil
+}
+
+// Delete project by id
+func (r *ProjectRepo) Delete(id int, userID int) error {
+	// dbClient := db.GetDbClient()
+	// var project db.Project
+
+	// if err := dbClient.First(&project, projectID).Error; gorm.IsRecordNotFoundError(err) {
+	// 	return c.JSON(http.StatusNotFound, nil)
+	// }
+	// if project.Published || project.OwnerID != uint(userID) {
+	// 	return c.JSON(http.StatusForbidden, nil)
+	// }
+
+	// dbClient.Delete(&project)
+	return nil
 }
