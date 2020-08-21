@@ -118,12 +118,19 @@ func (h *DonationHandler) CreateDonation(c echo.Context) error {
 		Payment:   request.Payment,
 	}
 	err = h.DonationModel.Create(donation)
-	//TODO switch by err type
-	if err != nil {
-		return c.JSON(http.StatusForbidden, nil)
-	}
 
-	return c.JSON(http.StatusCreated, donation)
+	switch err {
+	case nil:
+		return c.JSON(http.StatusCreated, donation)
+	case models.ErrDonationAlreadyExist:
+		return c.JSON(http.StatusForbidden, err)
+	case models.ErrDonationForbidden:
+		return c.JSON(http.StatusForbidden, err)
+	case models.ErrUserNotFound:
+		return c.JSON(http.StatusBadRequest, err)
+	default:
+		return c.JSON(http.StatusInternalServerError, err)
+	}
 }
 
 // DeleteDonation godoc
@@ -142,12 +149,14 @@ func (h *DonationHandler) DeleteDonation(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, errorResponse("wrong ID"))
 	}
 	err = h.DonationModel.Delete(donationID, userID)
-	//TODO switch by err type
-	if err != nil {
-		return c.JSON(http.StatusForbidden, nil)
+	switch err {
+	case nil:
+		return c.NoContent(http.StatusNoContent)
+	case models.ErrDonationModifyForbidden:
+		return c.JSON(http.StatusForbidden, err)
+	default:
+		return c.JSON(http.StatusInternalServerError, err)
 	}
-
-	return c.NoContent(http.StatusNoContent)
 }
 
 // UpdateDonation godoc
@@ -180,10 +189,12 @@ func (h *DonationHandler) UpdateDonation(c echo.Context) error {
 		Payment: request.Payment,
 	}
 	err = h.DonationModel.Update(donation)
-	//TODO switch by err type
-	if err != nil {
-		return c.JSON(http.StatusForbidden, nil)
+	switch err {
+	case nil:
+		return c.JSON(http.StatusOK, donation)
+	case models.ErrDonationModifyForbidden:
+		return c.JSON(http.StatusForbidden, err)
+	default:
+		return c.JSON(http.StatusInternalServerError, err)
 	}
-
-	return c.JSON(http.StatusOK, donation)
 }
