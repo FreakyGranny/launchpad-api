@@ -79,31 +79,45 @@ func (mr *MockProjectImplMockRecorder) GetUserProjects(f interface{}) *gomock.Ca
 }
 
 // Create mocks base method
-func (m *MockProjectImpl) Create(d *models.Project) error {
+func (m *MockProjectImpl) Create(p *models.Project) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", d)
+	ret := m.ctrl.Call(m, "Create", p)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Create indicates an expected call of Create
-func (mr *MockProjectImplMockRecorder) Create(d interface{}) *gomock.Call {
+func (mr *MockProjectImplMockRecorder) Create(p interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockProjectImpl)(nil).Create), d)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockProjectImpl)(nil).Create), p)
 }
 
 // Update mocks base method
-func (m *MockProjectImpl) Update(d *models.Project) error {
+func (m *MockProjectImpl) Update(p *models.Project) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", d)
+	ret := m.ctrl.Call(m, "Update", p)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Update indicates an expected call of Update
-func (mr *MockProjectImplMockRecorder) Update(d interface{}) *gomock.Call {
+func (mr *MockProjectImplMockRecorder) Update(p interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockProjectImpl)(nil).Update), d)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockProjectImpl)(nil).Update), p)
+}
+
+// DropEventDate mocks base method
+func (m *MockProjectImpl) DropEventDate(p *models.Project) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DropEventDate", p)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DropEventDate indicates an expected call of DropEventDate
+func (mr *MockProjectImplMockRecorder) DropEventDate(p interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DropEventDate", reflect.TypeOf((*MockProjectImpl)(nil).DropEventDate), p)
 }
 
 // Delete mocks base method

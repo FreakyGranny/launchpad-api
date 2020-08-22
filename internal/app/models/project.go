@@ -20,6 +20,8 @@ const (
 	StatusHarvest string = "harvest"
 	// StatusSearch search project
 	StatusSearch string = "search"
+
+	userProjectCountLimit = 20
 )
 
 // ProjectImpl ...
@@ -29,6 +31,7 @@ type ProjectImpl interface {
 	GetUserProjects(f *ProjectUserFilter) (*[]Project, error)
 	Create(p *Project) error
 	Update(p *Project) error
+	DropEventDate(p *Project) error
 	Delete(id int, userID int) error
 }
 
@@ -108,7 +111,7 @@ type ProjectPaginator struct {
 
 // NextPage ...
 func (pp *ProjectPaginator) NextPage() (int, bool) {
-	if pp.Page*pp.Page < pp.EntryCount {
+	if pp.Page*pp.PageSize < pp.EntryCount {
 		return pp.Page + 1, true
 	}
 	return 0, false
@@ -181,17 +184,15 @@ func (r *ProjectRepo) GetProjectsWithPagination(f *ProjectListFilter) (ProjectPa
 // GetUserProjects ...
 func (r *ProjectRepo) GetUserProjects(f *ProjectUserFilter) (*[]Project, error) {
 	projects := []Project{}
-	q := r.db.Model(&projects).Relation("Category").Relation("ProjectType")
-	if f.UserID != 0 {
-		q = q.Where("owner_id = ?", f.UserID)
-	}
+	q := r.db.Model(&projects).Relation("Category").Relation("ProjectType").Where("owner_id = ?", f.UserID)
 	if !f.Owned {
 		q = q.Where("p.published", true)
 	}
 	if f.Contributed {
-		q = filterQueryByContribution(q, f.UserID)
+		cProjects := r.db.Model((*Donation)(nil)).ColumnExpr("project_id").Where("user_id = ?", f.UserID)
+		q = q.Where("p.id IN (?)", cProjects)
 	}
-	err := q.Limit(20).Order("id DESC").Select()
+	err := q.Limit(userProjectCountLimit).Order("id DESC").Select()
 	if err != nil {
 		return nil, err
 	}
@@ -199,37 +200,46 @@ func (r *ProjectRepo) GetUserProjects(f *ProjectUserFilter) (*[]Project, error) 
 	return &projects, nil
 }
 
-func filterQueryByContribution(q *orm.Query, userID int) *orm.Query {
-	query := q
-	// 	query = query.Where("id IN (?)", dbClient.Table("donations").Select("project_id").Where("user_id = ?", userID).SubQuery())
-
-	return query
-}
-
 // Create new project
 func (r *ProjectRepo) Create(p *Project) error {
+	count, err := r.db.Model((*User)(nil)).Where("u.id = ?", p.OwnerID).Count()
+	if err != nil {
+		return err
+	}
+	if count != 1 {
+		return ErrUserNotFound
+	}
+	_, err = r.db.Model(p).Insert()
 
-	return nil
+	return err
 }
 
 // Update new project
 func (r *ProjectRepo) Update(p *Project) error {
+	// if p.EventDate.IsZero() {}
+	_, err := r.db.Model(p).WherePK().UpdateNotZero()
 
-	return nil
+	return err
+}
+
+// DropEventDate set event_date to null value
+func (r *ProjectRepo) DropEventDate(p *Project) error {
+	_, err := r.db.Model(p).Set("event_date = null").WherePK().Update()
+
+	return err
 }
 
 // Delete project by id
 func (r *ProjectRepo) Delete(id int, userID int) error {
-	// dbClient := db.GetDbClient()
-	// var project db.Project
+	project := &Project{}
+	err := r.db.Model(project).Where("p.id = ?", id).Select()
+	if err != nil {
+		return err
+	}
+	if project.Published || project.OwnerID != userID {
+		return ErrProjectModifyForbidden
+	}
+	_, err = r.db.Model(project).WherePK().Delete()
 
-	// if err := dbClient.First(&project, projectID).Error; gorm.IsRecordNotFoundError(err) {
-	// 	return c.JSON(http.StatusNotFound, nil)
-	// }
-	// if project.Published || project.OwnerID != uint(userID) {
-	// 	return c.JSON(http.StatusForbidden, nil)
-	// }
-
-	// dbClient.Delete(&project)
-	return nil
+	return err
 }

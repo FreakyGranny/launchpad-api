@@ -1,22 +1,8 @@
 package models
 
 import (
-	"errors"
-
 	"github.com/go-pg/pg/v10"
 )
-
-// ErrDonationAlreadyExist donation to project for user already exist
-var ErrDonationAlreadyExist = errors.New("donation to this project already exist")
-
-// ErrDonationForbidden donation to project is not allowed
-var ErrDonationForbidden = errors.New("donation to project is not allowed")
-
-// ErrDonationModifyForbidden donation editing is not allowed
-var ErrDonationModifyForbidden = errors.New("donation editing is not allowed")
-
-// ErrUserNotFound user not found
-var ErrUserNotFound = errors.New("user not found")
 
 //go:generate mockgen -source=$GOFILE -destination=../mocks/model_donation_mock.go -package=mocks DonationImpl
 
@@ -119,11 +105,8 @@ func (r *DonationRepo) Delete(id int, userID int) error {
 		return ErrDonationModifyForbidden
 	}
 	_, err = r.db.Model(donation).WherePK().Delete()
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
 
 // Update not locked donation
@@ -134,11 +117,11 @@ func (r *DonationRepo) Update(d *Donation) error {
 		return err
 	}
 	if donation.Locked && donation.Project.OwnerID == d.UserID {
-		_, err = r.db.Model(d).Set("paid = ?paid").Where("id = ?id").Update()
+		_, err = r.db.Model(d).Set("paid = ?paid").WherePK().Update()
 		return err
 	}
 	if !donation.Locked && donation.UserID == d.UserID {
-		_, err = r.db.Model(d).Set("payment = ?payment").Where("id = ?id").Update()
+		_, err = r.db.Model(d).Set("payment = ?payment").WherePK().Update()
 		return err
 	}
 

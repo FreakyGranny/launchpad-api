@@ -53,18 +53,19 @@ type ProjectDetailView struct {
 
 // ProjectModifyRequest Request for project creation
 type ProjectModifyRequest struct {
-	Title        string `json:"title"`
-	SubTitle     string `json:"subtitle"`
-	ReleaseDate  string `json:"release_date"`
-	EventDate    string `json:"event_date,omitempty"`
-	Category     int    `json:"category"`
-	GoalPeople   int    `json:"goal_people"`
-	GoalAmount   int    `json:"goal_amount"`
-	ImageLink    string `json:"image_link"`
-	Instructions string `json:"instructions"`
-	Description  string `json:"description"`
-	ProjectType  int    `json:"project_type"`
-	Published    bool   `json:"published,omitempty"`
+	Title         string `json:"title"`
+	SubTitle      string `json:"subtitle"`
+	ReleaseDate   string `json:"release_date"`
+	EventDate     string `json:"event_date,omitempty"`
+	Category      int    `json:"category"`
+	GoalPeople    int    `json:"goal_people"`
+	GoalAmount    int    `json:"goal_amount"`
+	ImageLink     string `json:"image_link"`
+	Instructions  string `json:"instructions"`
+	Description   string `json:"description"`
+	ProjectType   int    `json:"project_type"`
+	Published     bool   `json:"published,omitempty"`
+	DropEventDate bool   `json:"drop_event_date,omitempty"`
 }
 
 // ProjectCreateResponse Response for project creation
@@ -173,7 +174,10 @@ func (h *ProjectHandler) GetProjects(c echo.Context) error {
 // @Security Bearer
 // @Router /project/user/{id} [get]
 func (h *ProjectHandler) GetUserProjects(c echo.Context) error {
-	userID, _ := strconv.Atoi(c.Param("id"))
+	userID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, errorResponse("wrong user id"))
+	}
 	onlyOwned, _ := strconv.ParseBool(c.QueryParam("owned"))
 	onlyContributed, _ := strconv.ParseBool(c.QueryParam("contributed"))
 
@@ -311,12 +315,14 @@ func (h *ProjectHandler) CreateProject(c echo.Context) error {
 		ProjectTypeID: cpRequest.ProjectType,
 	}
 	err = h.ProjectModel.Create(&newProject)
-	//TODO switch by err type
-	if err != nil {
-		return c.JSON(http.StatusForbidden, nil)
+	switch err {
+	case nil:
+		return c.JSON(http.StatusCreated, ProjectCreateResponse{ID: newProject.ID})
+	case models.ErrUserNotFound:
+		return c.JSON(http.StatusBadRequest, err)
+	default:
+		return c.JSON(http.StatusInternalServerError, err)
 	}
-
-	return c.JSON(http.StatusCreated, ProjectCreateResponse{ID: newProject.ID})
 }
 
 // UpdateProject godoc
@@ -351,30 +357,39 @@ func (h *ProjectHandler) UpdateProject(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errorResponse("strategy not found"))
 	}
-	releaseDate, err := parseDate(upRequest.ReleaseDate)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, errorResponse("wrong release date"))
-	}
-	eventTime, err := parseDateTime(upRequest.EventDate)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, errorResponse("wrong event date"))
-	}
-	project.Title = upRequest.Title
-	project.SubTitle = upRequest.SubTitle
-	project.Instructions = upRequest.Instructions
-	project.Description = upRequest.Description
-	project.ImageLink = upRequest.ImageLink
-	project.CategoryID = upRequest.Category
-	project.ProjectTypeID = upRequest.ProjectType
-	project.GoalAmount = upRequest.GoalAmount
-	project.GoalPeople = upRequest.GoalPeople
-	project.ReleaseDate = releaseDate
-	project.EventDate = eventTime
-	project.Published = upRequest.Published
 
-	err = h.ProjectModel.Update(project)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, errorResponse("unable to update project"))
+	if upRequest.DropEventDate {
+		err = h.ProjectModel.DropEventDate(project)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, errorResponse("unable to drop event date"))
+		}		
+	} else {
+		releaseDate, err := parseDate(upRequest.ReleaseDate)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, errorResponse("wrong release date"))
+		}
+		eventTime, err := parseDateTime(upRequest.EventDate)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, errorResponse("wrong event date"))
+		}
+
+		project.Title = upRequest.Title
+		project.SubTitle = upRequest.SubTitle
+		project.Instructions = upRequest.Instructions
+		project.Description = upRequest.Description
+		project.ImageLink = upRequest.ImageLink
+		project.CategoryID = upRequest.Category
+		project.ProjectTypeID = upRequest.ProjectType
+		project.GoalAmount = upRequest.GoalAmount
+		project.GoalPeople = upRequest.GoalPeople
+		project.ReleaseDate = releaseDate
+		project.EventDate = eventTime
+		project.Published = upRequest.Published
+
+		err = h.ProjectModel.Update(project)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, errorResponse("unable to update project"))
+		}
 	}
 	projectResponse := ProjectDetailView{
 		ID:           project.ID,
