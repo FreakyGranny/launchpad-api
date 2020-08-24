@@ -1,6 +1,11 @@
 package cmd
 
 import (
+	"context"
+	"os"
+	"os/signal"
+	"sync"
+
 	"github.com/jonboulle/clockwork"
 	"github.com/labstack/gommon/log"
 
@@ -45,16 +50,19 @@ func API(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 	defer d.Close()
-	
+
 	pModel := models.NewProjectModel(d)
 	uModel := models.NewUserModel(d)
-	b := misc.NewBackground(pModel)
-	uu := misc.NewUserUpdater(uModel)
 
-	go b.RecalcProject()
-	go uu.UpdateUser()
+	b := misc.NewBackground(pModel, uModel)
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
+
+	go b.RecalcProject(wg)
+	go b.UpdateUser(wg)
 	// update user rate when project closing
 	// go misc.HarvestCheck()
+	wg.Add(2)
 
 	e := echo.New()
 	e.GET("/docs/*", echoSwagger.WrapHandler)
@@ -110,7 +118,21 @@ func API(cmd *cobra.Command, args []string) {
 	dg.DELETE("/:id", hd.DeleteDonation)
 	dg.PATCH("/:id", hd.UpdateDonation)
 
-	log.Fatal(e.Start(":1323"))
+	go func() {
+		if err := e.Start(":1323"); err != nil {
+			e.Logger.Info("shutting down the server")
+		}
+	}()
+
+	terminate := make(chan os.Signal, 1)
+	signal.Notify(terminate, os.Interrupt)
+	<-terminate
+	ctx := context.Background()
+	if err := e.Shutdown(ctx); err != nil {
+		e.Logger.Fatal(err)
+	}
+	close(b.GetRecalcPipe())
+	close(b.GetUpdatePipe())
 }
 
 // NewAPICmd return api command

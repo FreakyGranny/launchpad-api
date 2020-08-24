@@ -1,6 +1,8 @@
 package misc
 
 import (
+	"sync"
+
 	"github.com/FreakyGranny/launchpad-api/internal/app/models"
 	"github.com/labstack/gommon/log"
 )
@@ -8,28 +10,18 @@ import (
 // Background process
 type Background struct {
 	ProjectModel models.ProjectImpl
+	UserModel    models.UserImpl
 	RecalcChan   chan int
-}
-
-// UserUpdater process
-type UserUpdater struct {
-	UserModel  models.UserImpl
-	UpdateChan chan int
+	UpdateChan   chan int
 }
 
 // NewBackground return new background instance
-func NewBackground(m models.ProjectImpl) *Background {
+func NewBackground(mp models.ProjectImpl, mu models.UserImpl) *Background {
 	return &Background{
-		ProjectModel: m,
+		ProjectModel: mp,
+		UserModel:    mu,
 		RecalcChan:   make(chan int, 100),
-	}
-}
-
-// NewUserUpdater returns new userUpdater instance
-func NewUserUpdater(m models.UserImpl) *UserUpdater {
-	return &UserUpdater{
-		UserModel:  m,
-		UpdateChan: make(chan int, 100),
+		UpdateChan:   make(chan int, 100),
 	}
 }
 
@@ -39,8 +31,8 @@ func (b *Background) GetRecalcPipe() chan int {
 }
 
 // GetUpdatePipe returns update pipe
-func (uu *UserUpdater) GetUpdatePipe() chan int {
-	return uu.UpdateChan
+func (b *Background) GetUpdatePipe() chan int {
+	return b.UpdateChan
 }
 
 // // GetHarvestPipe returns harvest pipe
@@ -49,13 +41,17 @@ func (uu *UserUpdater) GetUpdatePipe() chan int {
 // }
 
 // RecalcProject update total for project
-func (b *Background) RecalcProject() {
-	defer close(b.RecalcChan)
+func (b *Background) RecalcProject(wg *sync.WaitGroup) {
+	defer wg.Done()
 	var project *models.Project
 	var ok bool
 
 	for {
-		projectID := <-b.RecalcChan
+		projectID, open := <-b.RecalcChan
+		if projectID == 0 && !open {
+			log.Info("stop recalc")
+			return
+		}
 		project, ok = b.ProjectModel.Get(projectID)
 		if !ok {
 			log.Errorf("project %d not found", projectID)
@@ -66,7 +62,11 @@ func (b *Background) RecalcProject() {
 			log.Errorf("unable to get stategy for project %d", projectID)
 			continue
 		}
-		strategy.Recalc(project)
+		err = strategy.Recalc(project)
+		if err != nil {
+			log.Errorf("unable to recalc project %d", projectID)
+			continue
+		}
 		// strategy.CheckSearch(&project)
 	}
 }
@@ -94,54 +94,55 @@ func (b *Background) RecalcProject() {
 // }
 
 // UpdateUser update user's rate
-func (uu *UserUpdater) UpdateUser() {
-	defer close(uu.UpdateChan)
+func (b *Background) UpdateUser(wg *sync.WaitGroup) {
+	defer wg.Done()
 	var user *models.User
 	var ok bool
 	var pGroups []models.ProjectGroup
 	var err error
+
+	for {
+		userID, open := <-b.UpdateChan
+		if userID == 0 && !open {
+			log.Info("stop update users")
+			return
+		}
+		user, ok = b.UserModel.Get(userID)
+		if !ok {
+			log.Errorf("user %d not found", userID)
+			continue
+		}
+		pGroups, err = b.UserModel.GetProjectsForRate(userID)
+		if err != nil {
+			log.Error("error while fetching project groups")
+		}
+		user.ProjectCount, user.SuccessRate = getStats(pGroups)
+
+		_, err = b.UserModel.Update(user)
+		if err != nil {
+			log.Error("Error while trying update user")
+		}
+	}
+}
+
+func getStats(groups []models.ProjectGroup) (int, float32) {
 	var projectCount int
 	var closedCount int
 	var successCount int
 	var successRate float32
 
-	for {
-		userID := <-uu.UpdateChan
-		projectCount = 0
-		closedCount = 0
-		successCount = 0
-		successRate = 0
-	
-		user, ok = uu.UserModel.Get(userID)
-		if !ok {
-			log.Errorf("user %d not found", userID)
-			continue
+	for _, group := range groups {
+		projectCount += group.Cnt
+		if group.Closed {
+			closedCount += group.Cnt
 		}
-		pGroups, err = uu.UserModel.GetProjectsForRate(userID)
-		if err != nil {
-			log.Error("error while fetching project groups")
-		}
-		if len(pGroups) == 0 {
-			continue
-		}
-		for _, group := range pGroups {
-			projectCount += group.Cnt
-			if group.Closed {
-				closedCount += group.Cnt
-			}
-			if group.Closed && group.Locked {
-				successCount += group.Cnt
-			}
-		}
-		if closedCount > 0 {
-			successRate = float32(successCount) / float32(closedCount)
-		}
-		user.ProjectCount = projectCount
-		user.SuccessRate = successRate
-
-		_, err = uu.UserModel.Update(user)
-		if err != nil {
-			log.Error("Error while trying update user")
+		if group.Closed && group.Locked {
+			successCount += group.Cnt
 		}
 	}
+	if closedCount > 0 {
+		successRate = float32(successCount) / float32(closedCount)
+	}
+
+	return projectCount, successRate
 }
