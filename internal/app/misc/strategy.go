@@ -9,7 +9,7 @@ import (
 // Strategy project strategy depends on type
 type Strategy interface {
 	Percent(p *models.Project) int
-	// Recalc(p *models.Project) int
+	Recalc(p *models.Project) error
 	// CheckSearch(p *models.Project)
 	// CheckHarvest(p *models.Project)
 }
@@ -28,20 +28,10 @@ func (s *MoneyStrategy) Percent(p *models.Project) int {
 	return int(float64(p.Total) / float64(p.GoalAmount) * 100)
 }
 
-// // Recalc recalculate project
-// func (s *MoneyStrategy) Recalc(p *models.Project) uint {
-// 	dbClient := models.GetDbClient()
-// 	var donations []models.Donation
-// 	var total uint = 0
-
-// 	dbClient.Where("project_id = ?", p.ID).Find(&donations)
-
-// 	for _, d := range donations {
-// 		total += d.Payment
-// 	}
-
-// 	return total
-// }
+// Recalc recalculate project
+func (s *MoneyStrategy) Recalc(p *models.Project) error {
+	return s.projectModel.UpdateTotalByPayment(p)
+}
 
 // // CheckSearch check project for search stage ending
 // func (s *MoneyStrategy) CheckSearch(p *models.Project) {
@@ -79,14 +69,10 @@ func (s *EventStrategy) Percent(p *models.Project) int {
 	return int(float64(p.Total) / float64(p.GoalPeople) * 100)
 }
 
-// // Recalc recalculate project
-// func (s *EventStrategy) Recalc(p *models.Project) uint {
-// 	dbClient := models.GetDbClient()
-// 	var donationCount uint
-// 	dbClient.Model(&models.Donation{}).Where("project_id = ?", p.ID).Count(&donationCount)
-
-// 	return donationCount
-// }
+// Recalc recalculate project
+func (s *EventStrategy) Recalc(p *models.Project) error {
+	return s.projectModel.UpdateTotalByCount(p)
+}
 
 // // CheckSearch check project for search stage ending
 // func (s *EventStrategy) CheckSearch(p *models.Project) {
@@ -109,10 +95,10 @@ func (s *EventDateStrategy) Percent(p *models.Project) int {
 	return s.baseStrategy.Percent(p)
 }
 
-// // Recalc recalculate project
-// func (s *EventDateStrategy) Recalc(p *models.Project) uint {
-// 	return s.baseStrategy.Recalc(p)
-// }
+// Recalc recalculate project
+func (s *EventDateStrategy) Recalc(p *models.Project) error {
+	return s.baseStrategy.Recalc(p)
+}
 
 // // CheckSearch check project for search stage ending
 // func (s *EventDateStrategy) CheckSearch(p *models.Project) {
@@ -134,10 +120,10 @@ func (s *MoneyEqualStrategy) Percent(p *models.Project) int {
 	return s.eventStrategy.Percent(p)
 }
 
-// // Recalc recalculate project
-// func (s *MoneyEqualStrategy) Recalc(p *models.Project) uint {
-// 	return s.eventStrategy.Recalc(p)
-// }
+// Recalc recalculate project
+func (s *MoneyEqualStrategy) Recalc(p *models.Project) error {
+	return s.eventStrategy.Recalc(p)
+}
 
 // // CheckSearch check project for search stage ending
 // func (s *MoneyEqualStrategy) CheckSearch(p *models.Project) {

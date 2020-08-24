@@ -32,7 +32,9 @@ type ProjectImpl interface {
 	Create(p *Project) error
 	Update(p *Project) error
 	DropEventDate(p *Project) error
-	Delete(id int, userID int) error
+	Delete(p *Project) error
+	UpdateTotalByPayment(p *Project) error
+	UpdateTotalByCount(p *Project) error
 }
 
 // Project model
@@ -214,9 +216,8 @@ func (r *ProjectRepo) Create(p *Project) error {
 	return err
 }
 
-// Update new project
+// Update project
 func (r *ProjectRepo) Update(p *Project) error {
-	// if p.EventDate.IsZero() {}
 	_, err := r.db.Model(p).WherePK().UpdateNotZero()
 
 	return err
@@ -230,16 +231,61 @@ func (r *ProjectRepo) DropEventDate(p *Project) error {
 }
 
 // Delete project by id
-func (r *ProjectRepo) Delete(id int, userID int) error {
-	project := &Project{}
-	err := r.db.Model(project).Where("p.id = ?", id).Select()
+func (r *ProjectRepo) Delete(p *Project) error {
+	_, err := r.db.Model(p).WherePK().Delete()
+
+	return err
+}
+
+// donationSum returns sum of donations payment for given project
+func (r *ProjectRepo) donationSum(id int) (int, error) {
+	sum := 0
+	err := r.db.Model((*Donation)(nil)).
+		ColumnExpr("sum(d.payment)").
+		Where("d.project_id = ?", id).
+		Select(&sum)
+	if err != nil {
+		return sum, err
+	}
+
+	return sum, nil
+}
+
+// donationCount returns count of donations for given project
+func (r *ProjectRepo) donationCount(id int) (int, error) {
+	count := 0
+	count, err := r.db.Model((*Donation)(nil)).Where("d.project_id = ?", id).Count()
+	if err != nil {
+		return count, err
+	}
+
+	return count, nil
+}
+
+func (r *ProjectRepo) saveTotal(p *Project, value int) error{
+	p.Total = value
+	_, err := r.db.Model(p).Set("total = ?total").WherePK().Update()
+
+	return err
+
+}
+
+// UpdateTotalByPayment ...
+func (r *ProjectRepo) UpdateTotalByPayment(p *Project) error {
+	sum, err := r.donationSum(p.ID)
 	if err != nil {
 		return err
 	}
-	if project.Published || project.OwnerID != userID {
-		return ErrProjectModifyForbidden
-	}
-	_, err = r.db.Model(project).WherePK().Delete()
 
-	return err
+	return r.saveTotal(p, sum)
+}
+
+// UpdateTotalByCount ...
+func (r *ProjectRepo) UpdateTotalByCount(p *Project) error {
+	count, err := r.donationCount(p.ID)
+	if err != nil {
+		return err
+	}
+
+	return r.saveTotal(p, count)
 }

@@ -33,6 +33,21 @@ func (m *MockDonationImpl) EXPECT() *MockDonationImplMockRecorder {
 	return m.recorder
 }
 
+// Get mocks base method
+func (m *MockDonationImpl) Get(id int) (*models.Donation, bool) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Get", id)
+	ret0, _ := ret[0].(*models.Donation)
+	ret1, _ := ret[1].(bool)
+	return ret0, ret1
+}
+
+// Get indicates an expected call of Get
+func (mr *MockDonationImplMockRecorder) Get(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockDonationImpl)(nil).Get), id)
+}
+
 // GetAllByUser mocks base method
 func (m *MockDonationImpl) GetAllByUser(id int) ([]models.Donation, error) {
 	m.ctrl.T.Helper()
@@ -92,15 +107,15 @@ func (mr *MockDonationImplMockRecorder) Update(d interface{}) *gomock.Call {
 }
 
 // Delete mocks base method
-func (m *MockDonationImpl) Delete(id, userID int) error {
+func (m *MockDonationImpl) Delete(d *models.Donation) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", id, userID)
+	ret := m.ctrl.Call(m, "Delete", d)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete
-func (mr *MockDonationImplMockRecorder) Delete(id, userID interface{}) *gomock.Call {
+func (mr *MockDonationImplMockRecorder) Delete(d interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockDonationImpl)(nil).Delete), id, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockDonationImpl)(nil).Delete), d)
 }

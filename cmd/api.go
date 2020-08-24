@@ -9,6 +9,7 @@ import (
 	"github.com/FreakyGranny/launchpad-api/internal/app/config"
 	"github.com/FreakyGranny/launchpad-api/internal/app/db"
 	"github.com/FreakyGranny/launchpad-api/internal/app/handlers"
+	"github.com/FreakyGranny/launchpad-api/internal/app/misc"
 	"github.com/FreakyGranny/launchpad-api/internal/app/models"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -39,14 +40,21 @@ func API(cmd *cobra.Command, args []string) {
 		log.SetLevel(log.DEBUG)
 	}
 
-	e := echo.New()
-	e.GET("/docs/*", echoSwagger.WrapHandler)
-
 	d, err := db.Connect(&cfg.Db)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer d.Close()
+	
+	pModel := models.NewProjectModel(d)
+	b := misc.NewBackground(pModel)
+
+	go b.RecalcProject()
+	// go misc.UpdateUser()
+	// go misc.HarvestCheck()
+
+	e := echo.New()
+	e.GET("/docs/*", echoSwagger.WrapHandler)
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -80,7 +88,7 @@ func API(cmd *cobra.Command, args []string) {
 	pt.Use(JWTmiddleware)
 	pt.GET("", hpt.GetProjectTypes)
 
-	hp := handlers.NewProjectHandler(models.NewProjectModel(d))
+	hp := handlers.NewProjectHandler(pModel)
 	p := e.Group("/project")
 	p.Use(JWTmiddleware)
 	p.GET("", hp.GetProjects)
@@ -90,7 +98,7 @@ func API(cmd *cobra.Command, args []string) {
 	p.PATCH("/:id", hp.UpdateProject)
 	p.DELETE("/:id", hp.DeleteProject)
 
-	hd := handlers.NewDonationHandler(models.NewDonationModel(d))
+	hd := handlers.NewDonationHandler(models.NewDonationModel(d), b.GetRecalcPipe())
 	dg := e.Group("/donation")
 	dg.Use(JWTmiddleware)
 	dg.GET("", hd.GetUserDonations)
@@ -98,12 +106,6 @@ func API(cmd *cobra.Command, args []string) {
 	dg.POST("", hd.CreateDonation)
 	dg.DELETE("/:id", hd.DeleteDonation)
 	dg.PATCH("/:id", hd.UpdateDonation)
-
-	// misc.BackgroundInit()
-
-	// go misc.RecalcProject()
-	// go misc.UpdateUser()
-	// go misc.HarvestCheck()
 
 	log.Fatal(e.Start(":1323"))
 }

@@ -121,17 +121,45 @@ func (mr *MockProjectImplMockRecorder) DropEventDate(p interface{}) *gomock.Call
 }
 
 // Delete mocks base method
-func (m *MockProjectImpl) Delete(id, userID int) error {
+func (m *MockProjectImpl) Delete(p *models.Project) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", id, userID)
+	ret := m.ctrl.Call(m, "Delete", p)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete
-func (mr *MockProjectImplMockRecorder) Delete(id, userID interface{}) *gomock.Call {
+func (mr *MockProjectImplMockRecorder) Delete(p interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockProjectImpl)(nil).Delete), id, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockProjectImpl)(nil).Delete), p)
+}
+
+// UpdateTotalByPayment mocks base method
+func (m *MockProjectImpl) UpdateTotalByPayment(p *models.Project) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateTotalByPayment", p)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateTotalByPayment indicates an expected call of UpdateTotalByPayment
+func (mr *MockProjectImplMockRecorder) UpdateTotalByPayment(p interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTotalByPayment", reflect.TypeOf((*MockProjectImpl)(nil).UpdateTotalByPayment), p)
+}
+
+// UpdateTotalByCount mocks base method
+func (m *MockProjectImpl) UpdateTotalByCount(p *models.Project) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateTotalByCount", p)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateTotalByCount indicates an expected call of UpdateTotalByCount
+func (mr *MockProjectImplMockRecorder) UpdateTotalByCount(p interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTotalByCount", reflect.TypeOf((*MockProjectImpl)(nil).UpdateTotalByCount), p)
 }
 
 // MockProjectPaginatorImpl is a mock of ProjectPaginatorImpl interface

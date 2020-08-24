@@ -11,11 +11,15 @@ import (
 // DonationHandler ...
 type DonationHandler struct {
 	DonationModel models.DonationImpl
+	RecalcChan    chan int
 }
 
 // NewDonationHandler ...
-func NewDonationHandler(m models.DonationImpl) *DonationHandler {
-	return &DonationHandler{DonationModel: m}
+func NewDonationHandler(m models.DonationImpl, ch chan int) *DonationHandler {
+	return &DonationHandler{
+		DonationModel: m,
+		RecalcChan:    ch,
+	}
 }
 
 // DonationCreateRequest ...
@@ -121,6 +125,7 @@ func (h *DonationHandler) CreateDonation(c echo.Context) error {
 
 	switch err {
 	case nil:
+		h.RecalcChan <- donation.ProjectID
 		return c.JSON(http.StatusCreated, donation)
 	case models.ErrDonationAlreadyExist:
 		return c.JSON(http.StatusForbidden, err)
@@ -148,12 +153,19 @@ func (h *DonationHandler) DeleteDonation(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, errorResponse("wrong ID"))
 	}
-	err = h.DonationModel.Delete(donationID, userID)
+	donation, ok := h.DonationModel.Get(donationID)
+	if !ok {
+		return c.JSON(http.StatusNotFound, errorResponse("donation not found"))
+	}
+	if donation.Locked || donation.UserID != userID {
+		return c.JSON(http.StatusForbidden, err)
+	}
+
+	err = h.DonationModel.Delete(donation)
 	switch err {
 	case nil:
+		h.RecalcChan <- donation.ProjectID
 		return c.NoContent(http.StatusNoContent)
-	case models.ErrDonationModifyForbidden:
-		return c.JSON(http.StatusForbidden, err)
 	default:
 		return c.JSON(http.StatusInternalServerError, err)
 	}
@@ -178,23 +190,39 @@ func (h *DonationHandler) UpdateDonation(c echo.Context) error {
 	}
 	userID, err := getUserIDFromToken(c.Get("user"))
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, err)
+		return c.JSON(http.StatusBadRequest, errorResponse(err.Error()))
 	}
 	donationID, _ := strconv.Atoi(c.Param("id"))
 
-	donation := &models.Donation{
-		ID:      donationID,
-		UserID:  userID,
-		Paid:    request.Paid,
-		Payment: request.Payment,
+	donation, ok := h.DonationModel.Get(donationID)
+	if !ok {
+		return c.JSON(http.StatusNotFound, errorResponse("donation not found"))
 	}
+	if request.Paid {
+		if request.Payment != 0 {
+			return c.JSON(http.StatusBadRequest, errorResponse("payment must be 0"))
+		}
+		if !donation.Locked || donation.Project.OwnerID != userID {
+			return c.JSON(http.StatusForbidden, errorResponse(err.Error()))
+		}
+	}
+	if !request.Paid {
+		if request.Payment <= 0 {
+			return c.JSON(http.StatusBadRequest, errorResponse("payment must be positive"))
+		}
+		if donation.Locked || donation.UserID != userID {
+			return c.JSON(http.StatusForbidden, errorResponse(err.Error()))
+		}
+	}
+
+	donation.Paid = request.Paid
+	donation.Payment = request.Payment
+
 	err = h.DonationModel.Update(donation)
-	switch err {
-	case nil:
-		return c.JSON(http.StatusOK, donation)
-	case models.ErrDonationModifyForbidden:
-		return c.JSON(http.StatusForbidden, err)
-	default:
-		return c.JSON(http.StatusInternalServerError, err)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, errorResponse(err.Error()))
 	}
+	h.RecalcChan <- donation.ProjectID
+
+	return c.JSON(http.StatusOK, donation)
 }

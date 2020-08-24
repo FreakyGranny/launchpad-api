@@ -41,6 +41,8 @@ func (s *DonationSuite) buildRequest() *http.Request {
 
 func (s *DonationSuite) TestGetProjectDonations() {
 	req := s.buildRequest()
+	recalcChan := make(chan int, 1)
+	defer close(recalcChan)
 
 	e := echo.New()
 	rec := httptest.NewRecorder()
@@ -49,7 +51,7 @@ func (s *DonationSuite) TestGetProjectDonations() {
 	c.SetParamNames("id")
 	c.SetParamValues("1")
 
-	h := NewDonationHandler(s.mockDonation)
+	h := NewDonationHandler(s.mockDonation, recalcChan)
 
 	donations := []models.Donation{
 		{
@@ -84,6 +86,8 @@ func (s *DonationSuite) TestGetProjectDonations() {
 
 func (s *DonationSuite) TestGetUserDonations() {
 	req := s.buildRequest()
+	recalcChan := make(chan int, 1)
+	defer close(recalcChan)
 
 	e := echo.New()
 	rec := httptest.NewRecorder()
@@ -96,7 +100,7 @@ func (s *DonationSuite) TestGetUserDonations() {
 
 	c.Set("user", token)
 
-	h := NewDonationHandler(s.mockDonation)
+	h := NewDonationHandler(s.mockDonation, recalcChan)
 
 	donations := []models.Donation{
 		{
@@ -132,6 +136,9 @@ func (s *DonationSuite) TestCreateDonation() {
 	}
 	req := httptest.NewRequest(echo.POST, "/", bytes.NewBuffer(body))
 	req.Header.Set("Content-type", "application/json")
+	
+	recalcChan := make(chan int, 1)
+	defer close(recalcChan)
 
 	e := echo.New()
 	rec := httptest.NewRecorder()
@@ -143,7 +150,7 @@ func (s *DonationSuite) TestCreateDonation() {
 	claims["id"] = float64(111)
 	c.Set("user", token)
 
-	h := NewDonationHandler(s.mockDonation)
+	h := NewDonationHandler(s.mockDonation, recalcChan)
 	donation := models.Donation{
 		Payment:   reqStruct.Payment,
 		ProjectID: reqStruct.ProjectID,
@@ -156,18 +163,22 @@ func (s *DonationSuite) TestCreateDonation() {
 	var pDonationsJSON = `{"id":0,"payment":100,"locked":false,"paid":false,"project":10}`
 
 	s.Require().Equal(pDonationsJSON, strings.Trim(rec.Body.String(), "\n"))
+	s.Require().Equal(10, <-recalcChan)
 }
 
 func (s *DonationSuite) TestUpdateDonation() {
 	body, err := json.Marshal(DonationUpdateRequest{
-		Payment: 100,
-		Paid:    true,
+		Payment: 200,
+		Paid:    false,
 	})
 	if err != nil {
 		s.T().Fail()
 	}
 	req := httptest.NewRequest(echo.PATCH, "/", bytes.NewBuffer(body))
 	req.Header.Set("Content-type", "application/json")
+	
+	recalcChan := make(chan int, 1)
+	defer close(recalcChan)
 
 	e := echo.New()
 	rec := httptest.NewRecorder()
@@ -181,27 +192,34 @@ func (s *DonationSuite) TestUpdateDonation() {
 	claims["id"] = float64(111)
 	c.Set("user", token)
 
-	h := NewDonationHandler(s.mockDonation)
-	donation := models.Donation{
+	h := NewDonationHandler(s.mockDonation, recalcChan)
+	donation := &models.Donation{
 		ID:        1,
 		Payment:   100,
 		UserID:    111,
-		Paid:      true,
+		Paid:      false,
 		Locked:    false,
+		ProjectID: 33,
 	}
-	s.mockDonation.EXPECT().Update(&donation).Return(nil)
+	s.mockDonation.EXPECT().Get(1).Return(donation, true)
+	donation.Payment = 200
+	s.mockDonation.EXPECT().Update(donation).Return(nil)
 	s.Require().NoError(h.UpdateDonation(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
 
-	var pDonationsJSON = `{"id":1,"payment":100,"locked":false,"paid":true,"project":0}`
+	var pDonationsJSON = `{"id":1,"payment":200,"locked":false,"paid":false,"project":33}`
 
 	s.Require().Equal(pDonationsJSON, strings.Trim(rec.Body.String(), "\n"))
+	s.Require().Equal(33, <-recalcChan)
 }
 
 func (s *DonationSuite) TestDeleteDonation() {
 	req := httptest.NewRequest(echo.DELETE, "/", bytes.NewBuffer(nil))
 	req.Header.Set("Content-type", "application/json")
 
+	recalcChan := make(chan int, 1)
+	defer close(recalcChan)
+
 	e := echo.New()
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -209,17 +227,25 @@ func (s *DonationSuite) TestDeleteDonation() {
 	c.SetParamNames("id")
 	c.SetParamValues("1")
 
+	expect := &models.Donation{
+		ID: 1,
+		UserID: 111,
+		ProjectID: 44,
+	}
+
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["id"] = float64(111)
 	c.Set("user", token)
 
-	h := NewDonationHandler(s.mockDonation)
-	s.mockDonation.EXPECT().Delete(1, 111).Return(nil)
+	h := NewDonationHandler(s.mockDonation, recalcChan)
+	s.mockDonation.EXPECT().Get(1).Return(expect, true)
+	s.mockDonation.EXPECT().Delete(expect).Return(nil)
 	s.Require().NoError(h.DeleteDonation(c))
 	s.Require().Equal(http.StatusNoContent, rec.Code)
 
 	s.Require().Equal("", rec.Body.String())
+	s.Require().Equal(44, <-recalcChan)
 }
 
 func TestDonationSuite(t *testing.T) {

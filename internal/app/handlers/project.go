@@ -433,11 +433,17 @@ func (h *ProjectHandler) DeleteProject(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, errorResponse("wrong ID"))
 	}
 	projectID, _ := strconv.Atoi(c.Param("id"))
+	project, ok := h.ProjectModel.Get(projectID)
+	if !ok {
+		return c.JSON(http.StatusNotFound, errorResponse("project not found"))
+	}
+	if project.Published || project.OwnerID != userID {
+		return c.JSON(http.StatusForbidden, errorResponse("project modify not allowed"))
+	}
 
-	err = h.ProjectModel.Delete(projectID, userID)
-	//TODO switch by err type
+	err = h.ProjectModel.Delete(project)
 	if err != nil {
-		return c.JSON(http.StatusForbidden, nil)
+		return c.JSON(http.StatusInternalServerError, errorResponse(err.Error()))
 	}
 
 	return c.JSON(http.StatusNoContent, nil)

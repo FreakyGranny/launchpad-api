@@ -242,7 +242,12 @@ func (s *ProjectSuite) TestDeleteProject() {
 	c.Set("user", token)
 
 	h := NewProjectHandler(s.mockProject)
-	s.mockProject.EXPECT().Delete(1, 111).Return(nil)
+	expect := &models.Project{
+		ID:      1,
+		OwnerID: 111,
+	}
+	s.mockProject.EXPECT().Get(1).Return(expect, true)
+	s.mockProject.EXPECT().Delete(expect).Return(nil)
 	s.Require().NoError(h.DeleteProject(c))
 	s.Require().Equal(http.StatusNoContent, rec.Code)
 }

@@ -8,11 +8,12 @@ import (
 
 // DonationImpl ...
 type DonationImpl interface {
+	Get(id int) (*Donation, bool)
 	GetAllByUser(id int) ([]Donation, error)
 	GetAllByProject(id int) ([]Donation, error)
 	Create(d *Donation) error
 	Update(d *Donation) error
-	Delete(id int, userID int) error
+	Delete(d *Donation) error
 }
 
 // Donation for project
@@ -38,6 +39,17 @@ func NewDonationModel(db *pg.DB) *DonationRepo {
 	return &DonationRepo{
 		db: db,
 	}
+}
+
+// Get donation
+func (r *DonationRepo) Get(id int) (*Donation, bool) {
+	donation := &Donation{}
+	err := r.db.Model(donation).Relation("Project").Where("d.id = ?", id).Select()
+	if err != nil {
+		return nil, false
+	}
+
+	return donation, true
 }
 
 // GetAllByUser returns all donations associated with user
@@ -95,35 +107,16 @@ func (r *DonationRepo) Create(d *Donation) error {
 }
 
 // Delete not locked donation
-func (r *DonationRepo) Delete(id int, userID int) error {
-	donation := &Donation{}
-	err := r.db.Model(donation).Where("d.id = ?", id).Select()
-	if err != nil {
-		return err
-	}
-	if donation.Locked || donation.UserID != userID {
-		return ErrDonationModifyForbidden
-	}
-	_, err = r.db.Model(donation).WherePK().Delete()
+func (r *DonationRepo) Delete(d *Donation) error {
+	_, err := r.db.Model(d).WherePK().Delete()
 
 	return err
 }
 
-// Update not locked donation
+// Update donation
 func (r *DonationRepo) Update(d *Donation) error {
-	donation := &Donation{}
-	err := r.db.Model(donation).Relation("Project").Where("d.id = ?", d.ID).Select()
-	if err != nil {
-		return err
-	}
-	if donation.Locked && donation.Project.OwnerID == d.UserID {
-		_, err = r.db.Model(d).Set("paid = ?paid").WherePK().Update()
-		return err
-	}
-	if !donation.Locked && donation.UserID == d.UserID {
-		_, err = r.db.Model(d).Set("payment = ?payment").WherePK().Update()
-		return err
-	}
+	_, err := r.db.Model(d).WherePK().UpdateNotZero()
 
-	return ErrDonationModifyForbidden
+	return err
+
 }
