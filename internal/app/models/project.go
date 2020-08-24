@@ -45,15 +45,15 @@ type Project struct {
 	SubTitle      string
 	ReleaseDate   time.Time
 	EventDate     time.Time
-	GoalPeople    int `pg:",use_zero"`
-	GoalAmount    int `pg:",use_zero"`
-	Total         int `pg:",use_zero"`
+	GoalPeople    int `pg:",notnull"`
+	GoalAmount    int `pg:",notnull"`
+	Total         int
 	Description   string
 	ImageLink     string
 	Instructions  string
-	Locked        bool `pg:",use_zero"`
-	Published     bool `pg:",use_zero"`
-	Closed        bool `pg:",use_zero"`
+	Locked        bool `pg:",notnull"`
+	Published     bool `pg:",notnull"`
+	Closed        bool `pg:",notnull"`
 	Owner         User
 	OwnerID       int
 	Category      Category
@@ -262,7 +262,7 @@ func (r *ProjectRepo) donationCount(id int) (int, error) {
 	return count, nil
 }
 
-func (r *ProjectRepo) saveTotal(p *Project, value int) error{
+func (r *ProjectRepo) saveTotal(p *Project, value int) error {
 	p.Total = value
 	_, err := r.db.Model(p).Set("total = ?total").WherePK().Update()
 

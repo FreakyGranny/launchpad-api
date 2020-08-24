@@ -85,7 +85,7 @@ func (s *LoginSuite) TestWithCreateUser() {
 
 	s.mockProvider.EXPECT().GetAccessToken(expectCode).Return(a, nil)
 	s.mockProvider.EXPECT().GetUserData(a.UserID, a.AccessToken).Return(ud, nil)
-	s.mockUser.EXPECT().FindByID(a.UserID).Return(user, false)
+	s.mockUser.EXPECT().Get(a.UserID).Return(user, false)
 	s.mockUser.EXPECT().Create(user).Return(user, nil)
 
 	s.Require().NoError(h.Login(c))
@@ -144,7 +144,7 @@ func (s *LoginSuite) TestWithUpdateUser() {
 
 	s.mockProvider.EXPECT().GetAccessToken(expectCode).Return(a, nil)
 	s.mockProvider.EXPECT().GetUserData(a.UserID, a.AccessToken).Return(ud, nil)
-	s.mockUser.EXPECT().FindByID(a.UserID).Return(user, true)
+	s.mockUser.EXPECT().Get(a.UserID).Return(user, true)
 	s.mockUser.EXPECT().Update(user).Return(user, nil)
 
 	s.Require().NoError(h.Login(c))

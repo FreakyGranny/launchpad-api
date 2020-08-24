@@ -8,10 +8,11 @@ import (
 
 // UserImpl ...
 type UserImpl interface {
-	FindByID(id int) (*User, bool)
+	Get(id int) (*User, bool)
 	Create(*User) (*User, error)
 	Update(*User) (*User, error)
 	GetParticipation(id int) ([]Participation, error)
+	GetProjectsForRate(userID int) ([]ProjectGroup, error)
 }
 
 // User model
@@ -40,8 +41,8 @@ func NewUserModel(db *pg.DB) *UserRepo {
 	}
 }
 
-// FindByID ...
-func (r *UserRepo) FindByID(id int) (*User, bool) {
+// Get returns user
+func (r *UserRepo) Get(id int) (*User, bool) {
 	user := &User{}
 	err := r.db.Model(user).Where("id = ?", id).Select()
 	if err != nil {
@@ -73,8 +74,15 @@ func (r *UserRepo) Update(u *User) (*User, error) {
 
 // Participation ...
 type Participation struct {
-	Cnt           uint `json:"count"`
-	ProjectTypeID uint `json:"id"`
+	Cnt           int `json:"count"`
+	ProjectTypeID int `json:"id"`
+}
+
+// ProjectGroup ...
+type ProjectGroup struct {
+	Cnt    int
+	Closed bool
+	Locked bool
 }
 
 // GetParticipation ...
@@ -86,10 +94,30 @@ func (r *UserRepo) GetParticipation(id int) ([]Participation, error) {
 		Join("JOIN projects as p ON d.project_id = p.id").
 		Group("p.project_type_id").
 		Where("d.user_id = ?", id).
+		Where("p.published = ?", true).
 		Select(&pts)
 	if err != nil {
 		return nil, err
 	}
 
 	return pts, nil
+}
+
+// GetProjectsForRate ...
+func (r *UserRepo) GetProjectsForRate(userID int) ([]ProjectGroup, error) {
+	pGroups := make([]ProjectGroup, 0)
+	err := r.db.Model((*Project)(nil)).
+		ColumnExpr("count(p.id) AS cnt").
+		ColumnExpr("p.closed").
+		ColumnExpr("p.locked").
+		Group("closed").
+		Group("locked").
+		Where("p.owner_id = ?", userID).
+		Where("p.published = ?", true).
+		Select(&pGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	return pGroups, nil
 }

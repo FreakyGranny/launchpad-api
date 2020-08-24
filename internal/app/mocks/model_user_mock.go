@@ -33,19 +33,19 @@ func (m *MockUserImpl) EXPECT() *MockUserImplMockRecorder {
 	return m.recorder
 }
 
-// FindByID mocks base method
-func (m *MockUserImpl) FindByID(id int) (*models.User, bool) {
+// Get mocks base method
+func (m *MockUserImpl) Get(id int) (*models.User, bool) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindByID", id)
+	ret := m.ctrl.Call(m, "Get", id)
 	ret0, _ := ret[0].(*models.User)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
 
-// FindByID indicates an expected call of FindByID
-func (mr *MockUserImplMockRecorder) FindByID(id interface{}) *gomock.Call {
+// Get indicates an expected call of Get
+func (mr *MockUserImplMockRecorder) Get(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockUserImpl)(nil).FindByID), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockUserImpl)(nil).Get), id)
 }
 
 // Create mocks base method
@@ -91,4 +91,19 @@ func (m *MockUserImpl) GetParticipation(id int) ([]models.Participation, error) 
 func (mr *MockUserImplMockRecorder) GetParticipation(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParticipation", reflect.TypeOf((*MockUserImpl)(nil).GetParticipation), id)
+}
+
+// GetProjectsForRate mocks base method
+func (m *MockUserImpl) GetProjectsForRate(userID int) ([]models.ProjectGroup, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProjectsForRate", userID)
+	ret0, _ := ret[0].([]models.ProjectGroup)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProjectsForRate indicates an expected call of GetProjectsForRate
+func (mr *MockUserImplMockRecorder) GetProjectsForRate(userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjectsForRate", reflect.TypeOf((*MockUserImpl)(nil).GetProjectsForRate), userID)
 }

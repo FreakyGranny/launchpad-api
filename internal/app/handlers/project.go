@@ -313,6 +313,10 @@ func (h *ProjectHandler) CreateProject(c echo.Context) error {
 		Instructions:  cpRequest.Instructions,
 		CategoryID:    cpRequest.Category,
 		ProjectTypeID: cpRequest.ProjectType,
+		Closed:        false,
+		Locked:        false,
+		Published:     false,
+		Total:         0,
 	}
 	err = h.ProjectModel.Create(&newProject)
 	switch err {
@@ -362,7 +366,7 @@ func (h *ProjectHandler) UpdateProject(c echo.Context) error {
 		err = h.ProjectModel.DropEventDate(project)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, errorResponse("unable to drop event date"))
-		}		
+		}
 	} else {
 		releaseDate, err := parseDate(upRequest.ReleaseDate)
 		if err != nil {

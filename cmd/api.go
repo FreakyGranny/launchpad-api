@@ -47,10 +47,13 @@ func API(cmd *cobra.Command, args []string) {
 	defer d.Close()
 	
 	pModel := models.NewProjectModel(d)
+	uModel := models.NewUserModel(d)
 	b := misc.NewBackground(pModel)
+	uu := misc.NewUserUpdater(uModel)
 
 	go b.RecalcProject()
-	// go misc.UpdateUser()
+	go uu.UpdateUser()
+	// update user rate when project closing
 	// go misc.HarvestCheck()
 
 	e := echo.New()
@@ -72,7 +75,7 @@ func API(cmd *cobra.Command, args []string) {
 	e.POST("/login", ha.Login)
 	e.OPTIONS("/login", ha.Login)
 
-	hu := handlers.NewUserHandler(models.NewUserModel(d))
+	hu := handlers.NewUserHandler(uModel)
 	u := e.Group("/user")
 	u.Use(JWTmiddleware)
 	u.GET("", hu.GetCurrentUser)

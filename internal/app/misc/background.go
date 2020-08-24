@@ -8,14 +8,28 @@ import (
 // Background process
 type Background struct {
 	ProjectModel models.ProjectImpl
-	RecalcChan chan int
+	RecalcChan   chan int
+}
+
+// UserUpdater process
+type UserUpdater struct {
+	UserModel  models.UserImpl
+	UpdateChan chan int
 }
 
 // NewBackground return new background instance
-func NewBackground(m models.ProjectImpl) *Background{
+func NewBackground(m models.ProjectImpl) *Background {
 	return &Background{
 		ProjectModel: m,
-		RecalcChan: make(chan int, 10),
+		RecalcChan:   make(chan int, 100),
+	}
+}
+
+// NewUserUpdater returns new userUpdater instance
+func NewUserUpdater(m models.UserImpl) *UserUpdater {
+	return &UserUpdater{
+		UserModel:  m,
+		UpdateChan: make(chan int, 100),
 	}
 }
 
@@ -24,10 +38,10 @@ func (b *Background) GetRecalcPipe() chan int {
 	return b.RecalcChan
 }
 
-// // GetUpdatePipe returns update pipe
-// func GetUpdatePipe() chan uint {
-// 	return updatePipe
-// }
+// GetUpdatePipe returns update pipe
+func (uu *UserUpdater) GetUpdatePipe() chan int {
+	return uu.UpdateChan
+}
 
 // // GetHarvestPipe returns harvest pipe
 // func GetHarvestPipe() chan uint {
@@ -50,6 +64,7 @@ func (b *Background) RecalcProject() {
 		strategy, err := GetStrategy(&project.ProjectType, b.ProjectModel)
 		if err != nil {
 			log.Errorf("unable to get stategy for project %d", projectID)
+			continue
 		}
 		strategy.Recalc(project)
 		// strategy.CheckSearch(&project)
@@ -78,30 +93,55 @@ func (b *Background) RecalcProject() {
 // 	}
 // }
 
-// // UpdateUser update total for project
-// func UpdateUser() {
-// 	defer close(updatePipe)
-// 	dbClient := db.GetDbClient()
-// 	var user db.User
+// UpdateUser update user's rate
+func (uu *UserUpdater) UpdateUser() {
+	defer close(uu.UpdateChan)
+	var user *models.User
+	var ok bool
+	var pGroups []models.ProjectGroup
+	var err error
+	var projectCount int
+	var closedCount int
+	var successCount int
+	var successRate float32
 
-// 	for {
-// 		userID := <-updatePipe
-// 		if err := dbClient.First(&user, userID).Error; gorm.IsRecordNotFoundError(err) {
-// 			log.Error(err)
-// 			return
-// 		}
-// 		var projectCount uint
-// 		var closedCount uint
-// 		var successCount uint
-// 		var successRate float32 = 0
+	for {
+		userID := <-uu.UpdateChan
+		projectCount = 0
+		closedCount = 0
+		successCount = 0
+		successRate = 0
+	
+		user, ok = uu.UserModel.Get(userID)
+		if !ok {
+			log.Errorf("user %d not found", userID)
+			continue
+		}
+		pGroups, err = uu.UserModel.GetProjectsForRate(userID)
+		if err != nil {
+			log.Error("error while fetching project groups")
+		}
+		if len(pGroups) == 0 {
+			continue
+		}
+		for _, group := range pGroups {
+			projectCount += group.Cnt
+			if group.Closed {
+				closedCount += group.Cnt
+			}
+			if group.Closed && group.Locked {
+				successCount += group.Cnt
+			}
+		}
+		if closedCount > 0 {
+			successRate = float32(successCount) / float32(closedCount)
+		}
+		user.ProjectCount = projectCount
+		user.SuccessRate = successRate
 
-// 		dbClient.Model(&db.Project{}).Where("published = ? AND owner_id = ?", true, userID).Count(&projectCount)
-// 		dbClient.Model(&db.Project{}).Where("closed = ? AND owner_id = ?", true, userID).Count(&closedCount)
-// 		if closedCount > 0 {
-// 			dbClient.Model(&db.Project{}).Where("closed = ? AND locked = ? AND owner_id = ?", true, true, userID).Count(&successCount)
-// 			successRate = float32(successCount) / float32(closedCount)
-// 		}
-
-// 		dbClient.Model(&user).Updates(db.User{ProjectCount: projectCount, SuccessRate: successRate})
-// 	}
-// }
+		_, err = uu.UserModel.Update(user)
+		if err != nil {
+			log.Error("Error while trying update user")
+		}
+	}
+}

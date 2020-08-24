@@ -69,7 +69,7 @@ func (s *UserSuite) TestGetUserByID() {
 		},
 	}
 
-	s.mockUser.EXPECT().FindByID(1).Return(user, true)
+	s.mockUser.EXPECT().Get(1).Return(user, true)
 	s.mockUser.EXPECT().GetParticipation(1).Return(pts, nil)
 
 	s.Require().NoError(h.GetUser(c))
@@ -91,7 +91,7 @@ func (s *UserSuite) TestGetUserNotFound() {
 
 	h := NewUserHandler(s.mockUser)
 
-	s.mockUser.EXPECT().FindByID(1).Return(&models.User{}, false)
+	s.mockUser.EXPECT().Get(1).Return(&models.User{}, false)
 
 	s.Require().NoError(h.GetUser(c))
 	s.Require().Equal(http.StatusNotFound, rec.Code)
@@ -121,7 +121,7 @@ func (s *UserSuite) TestGetCurrentUser() {
 	c.Set("user", token)
 	h := NewUserHandler(s.mockUser)
 
-	s.mockUser.EXPECT().FindByID(1).Return(user, true)
+	s.mockUser.EXPECT().Get(1).Return(user, true)
 	pts := []models.Participation{
 		{
 			Cnt:           1,

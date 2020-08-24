@@ -38,7 +38,7 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err)
 	}
-	user, ok := h.UserModel.FindByID(userID)
+	user, ok := h.UserModel.Get(userID)
 	if !ok {
 		return c.JSON(http.StatusNotFound, nil)
 	}
@@ -70,7 +70,7 @@ func (h *UserHandler) GetUser(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, errorResponse("wrong ID"))
 	}
-	user, ok := h.UserModel.FindByID(intID)
+	user, ok := h.UserModel.Get(intID)
 	if !ok {
 		return c.JSON(http.StatusNotFound, nil)
 	}

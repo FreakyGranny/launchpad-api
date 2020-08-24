@@ -62,7 +62,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 		log.Error(err)
 		return c.JSON(http.StatusUnauthorized, errorResponse("unable to get access token"))
 	}
-	user, userExist := h.UserModel.FindByID(data.UserID)
+	user, userExist := h.UserModel.Get(data.UserID)
 	user.ID = data.UserID
 	user.Email = data.Email
 
