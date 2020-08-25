@@ -25,8 +25,8 @@ func createDonations(db migrations.DB) error {
 }
 
 func rollbackDonations(db migrations.DB) error {
-	log.Warn("dropping table [categories]...")
-	_, err := db.Exec(`DROP TABLE categories`)
+	log.Warn("dropping table [donations]...")
+	_, err := db.Exec(`DROP TABLE donations`)
 
 	return err
 }

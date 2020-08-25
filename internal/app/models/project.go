@@ -29,12 +29,17 @@ type ProjectImpl interface {
 	Get(id int) (*Project, bool)
 	GetProjectsWithPagination(f *ProjectListFilter) (ProjectPaginatorImpl, error)
 	GetUserProjects(f *ProjectUserFilter) (*[]Project, error)
+	GetActiveProjects() (*[]Project, error)
 	Create(p *Project) error
 	Update(p *Project) error
 	DropEventDate(p *Project) error
 	Delete(p *Project) error
 	UpdateTotalByPayment(p *Project) error
 	UpdateTotalByCount(p *Project) error
+	Lock(p *Project) error
+	Close(p *Project) error
+	CheckForPaid(projectID int) (bool, error)
+	SetEqualDonation(p *Project) error	
 }
 
 // Project model
@@ -157,10 +162,22 @@ func (r *ProjectRepo) Get(id int) (*Project, bool) {
 	return project, true
 }
 
+// GetActiveProjects returns projects on search or harvest stage
+func (r *ProjectRepo) GetActiveProjects() (*[]Project, error) {
+	projects := &[]Project{}
+	err := r.db.Model(projects).
+		Relation("ProjectType").
+		Where("p.published = ?", true).
+		Where("p.closed = ?", false).
+		Select()
+
+	return projects, err
+}
+
 // GetProjectsWithPagination ...
 func (r *ProjectRepo) GetProjectsWithPagination(f *ProjectListFilter) (ProjectPaginatorImpl, error) {
 	projects := []Project{}
-	q := r.db.Model(&projects).Relation("Category").Relation("ProjectType").Where("p.published", true)
+	q := r.db.Model(&projects).Relation("Category").Relation("ProjectType").Where("p.published = ?", true)
 	if f.Category != 0 {
 		q = q.Where("category_id = ?", f.Category)
 	}
@@ -188,7 +205,7 @@ func (r *ProjectRepo) GetUserProjects(f *ProjectUserFilter) (*[]Project, error) 
 	projects := []Project{}
 	q := r.db.Model(&projects).Relation("Category").Relation("ProjectType").Where("owner_id = ?", f.UserID)
 	if !f.Owned {
-		q = q.Where("p.published", true)
+		q = q.Where("p.published = ?", true)
 	}
 	if f.Contributed {
 		cProjects := r.db.Model((*Donation)(nil)).ColumnExpr("project_id").Where("user_id = ?", f.UserID)
@@ -253,13 +270,7 @@ func (r *ProjectRepo) donationSum(id int) (int, error) {
 
 // donationCount returns count of donations for given project
 func (r *ProjectRepo) donationCount(id int) (int, error) {
-	count := 0
-	count, err := r.db.Model((*Donation)(nil)).Where("d.project_id = ?", id).Count()
-	if err != nil {
-		return count, err
-	}
-
-	return count, nil
+	return r.db.Model((*Donation)(nil)).Where("d.project_id = ?", id).Count()
 }
 
 func (r *ProjectRepo) saveTotal(p *Project, value int) error {
@@ -288,4 +299,58 @@ func (r *ProjectRepo) UpdateTotalByCount(p *Project) error {
 	}
 
 	return r.saveTotal(p, count)
+}
+
+// Lock project with associated donations
+func (r *ProjectRepo) Lock(p *Project) error {
+	_, err := r.db.Model(p).Set("locked = TRUE").WherePK().Update()
+	if err != nil {
+		return err
+	}
+	_, err = r.db.Model((*Donation)(nil)).
+		Set("locked = TRUE").
+		Where("d.project_id = ?", p.ID).
+		Update()
+
+	return err
+}
+
+// Close project with associated donations
+func (r *ProjectRepo) Close(p *Project) error {
+	_, err := r.db.Model(p).Set("locked = TRUE").WherePK().Update()
+	if err != nil {
+		return err
+	}
+	if !p.Locked {
+		_, err = r.db.Model((*Donation)(nil)).
+			Set("locked = TRUE").
+			Where("d.project_id = ?", p.ID).
+			Update()
+	}
+
+	return err
+}
+
+// CheckForPaid checks if all donations are paid
+func (r *ProjectRepo) CheckForPaid(projectID int) (bool, error) {
+	allPaid := false
+	err := r.db.Model((*Donation)(nil)).
+		ColumnExpr("bool_and(d.paid)").
+		Where("d.project_id = ?", projectID).
+		Select(&allPaid)
+	if err != nil {
+		return allPaid, err
+	}
+
+	return allPaid, nil
+}
+
+// SetEqualDonation checks if all donations are paid
+func (r *ProjectRepo) SetEqualDonation(p *Project) error {
+	_, err := r.db.Model((*Donation)(nil)).
+		Set("payment = ?", p.GoalAmount / p.GoalPeople).
+		Where("d.project_id = ?", p.ID).
+		Update()
+
+	return err
 }

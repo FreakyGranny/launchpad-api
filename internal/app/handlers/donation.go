@@ -223,6 +223,6 @@ func (h *DonationHandler) UpdateDonation(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, errorResponse(err.Error()))
 	}
 	h.RecalcChan <- donation.ProjectID
-
+	
 	return c.JSON(http.StatusOK, donation)
 }

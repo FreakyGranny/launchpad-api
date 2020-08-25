@@ -2,6 +2,7 @@ package misc
 
 import (
 	"sync"
+	"time"
 
 	"github.com/FreakyGranny/launchpad-api/internal/app/models"
 	"github.com/labstack/gommon/log"
@@ -9,20 +10,33 @@ import (
 
 // Background process
 type Background struct {
+	SystemModel  models.SystemImpl
 	ProjectModel models.ProjectImpl
 	UserModel    models.UserImpl
+	DoneChan     chan struct{}
 	RecalcChan   chan int
 	UpdateChan   chan int
+	SearchChan   chan *models.Project
+	HarverstChan chan *models.Project
 }
 
 // NewBackground return new background instance
-func NewBackground(mp models.ProjectImpl, mu models.UserImpl) *Background {
+func NewBackground(ms models.SystemImpl, mp models.ProjectImpl, mu models.UserImpl) *Background {
 	return &Background{
+		SystemModel:  ms,
 		ProjectModel: mp,
 		UserModel:    mu,
+		DoneChan:     make(chan struct{}, 1),
 		RecalcChan:   make(chan int, 100),
 		UpdateChan:   make(chan int, 100),
+		SearchChan:   make(chan *models.Project, 10),
+		HarverstChan: make(chan *models.Project, 10),
 	}
+}
+
+// Terminate stops all channels
+func (b *Background) Terminate() {
+	close(b.DoneChan)
 }
 
 // GetRecalcPipe returns recalc pipe
@@ -30,15 +44,43 @@ func (b *Background) GetRecalcPipe() chan int {
 	return b.RecalcChan
 }
 
-// GetUpdatePipe returns update pipe
-func (b *Background) GetUpdatePipe() chan int {
-	return b.UpdateChan
+// PeriodicCheck returns recalc pipe
+func (b *Background) PeriodicCheck(wg *sync.WaitGroup) {
+	defer wg.Done()
+	defer close(b.RecalcChan)
+	ticker := time.NewTicker(time.Second * 1)
+	defer ticker.Stop()
+	for {
+		select {
+		case t := <-ticker.C:
+			system, err := b.SystemModel.Get()
+			if err != nil {
+				log.Error("unable to get system settings")
+			}
+			system.LastCheck = system.LastCheck.Add(24 * time.Hour)
+			if t.Before(system.LastCheck) {
+				continue
+			}
+			log.Info("checking active projects")
+			err = b.SystemModel.Update(system)
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+			projects, err := b.ProjectModel.GetActiveProjects()
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+			for _, project := range *projects {
+				b.RecalcChan <- project.ID
+			}
+		case <-b.DoneChan:
+			log.Info("stop periodic check")
+			return
+		}
+	}
 }
-
-// // GetHarvestPipe returns harvest pipe
-// func GetHarvestPipe() chan uint {
-// 	return harvestPipe
-// }
 
 // RecalcProject update total for project
 func (b *Background) RecalcProject(wg *sync.WaitGroup) {
@@ -50,11 +92,16 @@ func (b *Background) RecalcProject(wg *sync.WaitGroup) {
 		projectID, open := <-b.RecalcChan
 		if projectID == 0 && !open {
 			log.Info("stop recalc")
+			close(b.SearchChan)
 			return
 		}
 		project, ok = b.ProjectModel.Get(projectID)
 		if !ok {
 			log.Errorf("project %d not found", projectID)
+			continue
+		}
+		if project.Locked {
+			b.SearchChan <- project
 			continue
 		}
 		strategy, err := GetStrategy(&project.ProjectType, b.ProjectModel)
@@ -67,31 +114,67 @@ func (b *Background) RecalcProject(wg *sync.WaitGroup) {
 			log.Errorf("unable to recalc project %d", projectID)
 			continue
 		}
-		// strategy.CheckSearch(&project)
+		b.SearchChan <- project
 	}
 }
 
-// // HarvestCheck check all paid
-// func HarvestCheck() {
-// 	defer close(recalcPipe)
-// 	dbClient := db.GetDbClient()
-// 	var project db.Project
+// CheckSearch check project for search stage
+func (b *Background) CheckSearch(wg *sync.WaitGroup) {
+	defer wg.Done()
+	for {
+		project, open := <-b.SearchChan
+		if project == nil && !open {
+			log.Info("stop checking search")
+			close(b.HarverstChan)
+			return
+		}
+		if project.Locked {
+			b.HarverstChan <- project
+			continue
+		}
+		strategy, err := GetStrategy(&project.ProjectType, b.ProjectModel)
+		if err != nil {
+			log.Errorf("unable to get stategy for project %d", project.ID)
+			continue
+		}
+		evolved, err := strategy.CheckSearch(project)
+		if err != nil {
+			log.Errorf("unable to check search for project %d", project.ID)
+			continue
+		}
+		if evolved {
+			b.HarverstChan <- project
+		} else {
+			strategy.CloseOutdated(project)
+		}
+	}
+}
 
-// 	for {
-// 		projectID := <-harvestPipe
-// 		if err := dbClient.Preload("ProjectType").First(&project, projectID).Error; gorm.IsRecordNotFoundError(err) {
-// 			log.Error(err)
-// 			return
-// 		}
-
-// 		strategy, err := GetStrategy(project.ProjectType)
-// 		if err != nil {
-// 			log.Error(err)
-// 			return
-// 		}
-// 		strategy.CheckHarvest(&project)
-// 	}
-// }
+// HarvestCheck check project for harvest stage
+func (b *Background) HarvestCheck(wg *sync.WaitGroup) {
+	defer wg.Done()
+	for {
+		project, open := <-b.HarverstChan
+		if project == nil && !open {
+			log.Info("stop checking harvest")
+			close(b.UpdateChan)
+			return
+		}
+		strategy, err := GetStrategy(&project.ProjectType, b.ProjectModel)
+		if err != nil {
+			log.Errorf("unable to get stategy for project %d", project.ID)
+			continue
+		}
+		evolved, err := strategy.CheckHarvest(project)
+		if err != nil {
+			log.Errorf("unable to check search for project %d", project.ID)
+			continue
+		}
+		if evolved {
+			b.UpdateChan <- project.OwnerID
+		}
+	}
+}
 
 // UpdateUser update user's rate
 func (b *Background) UpdateUser(wg *sync.WaitGroup) {

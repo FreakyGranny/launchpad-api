@@ -54,15 +54,16 @@ func API(cmd *cobra.Command, args []string) {
 	pModel := models.NewProjectModel(d)
 	uModel := models.NewUserModel(d)
 
-	b := misc.NewBackground(pModel, uModel)
+	b := misc.NewBackground(models.NewSystemModel(d), pModel, uModel)
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
-
+	
+	go b.PeriodicCheck(wg)
 	go b.RecalcProject(wg)
+	go b.CheckSearch(wg)
+	go b.HarvestCheck(wg)
 	go b.UpdateUser(wg)
-	// update user rate when project closing
-	// go misc.HarvestCheck()
-	wg.Add(2)
+	wg.Add(5)
 
 	e := echo.New()
 	e.GET("/docs/*", echoSwagger.WrapHandler)
@@ -131,8 +132,7 @@ func API(cmd *cobra.Command, args []string) {
 	if err := e.Shutdown(ctx); err != nil {
 		e.Logger.Fatal(err)
 	}
-	close(b.GetRecalcPipe())
-	close(b.GetUpdatePipe())
+	b.Terminate()
 }
 
 // NewAPICmd return api command

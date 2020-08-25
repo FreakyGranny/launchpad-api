@@ -97,7 +97,7 @@ func (s *StrategySuite) TestGetStrategyUnknown() {
 }
 
 func (s *StrategySuite) TestMoneyPercent() {
-	st := MoneyStrategy{s.mockProject}
+	st := NewMoneyStrategy(s.mockProject)
 	proj := &models.Project{
 		Total:      344,
 		GoalAmount: 1000,
@@ -106,7 +106,7 @@ func (s *StrategySuite) TestMoneyPercent() {
 }
 
 func (s *StrategySuite) TestMoneyPercentZero() {
-	st := MoneyStrategy{s.mockProject}
+	st := NewMoneyStrategy(s.mockProject)
 	proj := &models.Project{
 		Total:      344,
 		GoalAmount: 0,
@@ -115,7 +115,7 @@ func (s *StrategySuite) TestMoneyPercentZero() {
 }
 
 func (s *StrategySuite) TestEventPercent() {
-	st := EventStrategy{s.mockProject}
+	st := NewEventStrategy(s.mockProject)
 	proj := &models.Project{
 		Total:      3,
 		GoalPeople: 9,
@@ -124,7 +124,7 @@ func (s *StrategySuite) TestEventPercent() {
 }
 
 func (s *StrategySuite) TestEventPercentZero() {
-	st := EventStrategy{s.mockProject}
+	st := NewEventStrategy(s.mockProject)
 	proj := &models.Project{
 		Total:      4,
 		GoalPeople: 0,
@@ -133,9 +133,7 @@ func (s *StrategySuite) TestEventPercentZero() {
 }
 
 func (s *StrategySuite) TestEventDatePercent() {
-	st := EventDateStrategy{
-		baseStrategy: EventStrategy{s.mockProject},
-	}
+	st := NewEventDateStrategy(s.mockProject)
 	proj := &models.Project{
 		Total:      4,
 		GoalPeople: 9,
@@ -144,10 +142,7 @@ func (s *StrategySuite) TestEventDatePercent() {
 }
 
 func (s *StrategySuite) TestMoneyEqualPercent() {
-	st := MoneyEqualStrategy{
-		moneyStrategy: MoneyStrategy{s.mockProject},
-		eventStrategy: EventStrategy{s.mockProject},
-	}
+	st := NewMoneyEqualStrategy(s.mockProject)
 	proj := &models.Project{
 		Total:      2,
 		GoalPeople: 7,

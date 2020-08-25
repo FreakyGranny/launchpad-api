@@ -78,6 +78,21 @@ func (mr *MockProjectImplMockRecorder) GetUserProjects(f interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserProjects", reflect.TypeOf((*MockProjectImpl)(nil).GetUserProjects), f)
 }
 
+// GetActiveProjects mocks base method
+func (m *MockProjectImpl) GetActiveProjects() (*[]models.Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetActiveProjects")
+	ret0, _ := ret[0].(*[]models.Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetActiveProjects indicates an expected call of GetActiveProjects
+func (mr *MockProjectImplMockRecorder) GetActiveProjects() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActiveProjects", reflect.TypeOf((*MockProjectImpl)(nil).GetActiveProjects))
+}
+
 // Create mocks base method
 func (m *MockProjectImpl) Create(p *models.Project) error {
 	m.ctrl.T.Helper()
@@ -160,6 +175,63 @@ func (m *MockProjectImpl) UpdateTotalByCount(p *models.Project) error {
 func (mr *MockProjectImplMockRecorder) UpdateTotalByCount(p interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTotalByCount", reflect.TypeOf((*MockProjectImpl)(nil).UpdateTotalByCount), p)
+}
+
+// Lock mocks base method
+func (m *MockProjectImpl) Lock(p *models.Project) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Lock", p)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Lock indicates an expected call of Lock
+func (mr *MockProjectImplMockRecorder) Lock(p interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Lock", reflect.TypeOf((*MockProjectImpl)(nil).Lock), p)
+}
+
+// Close mocks base method
+func (m *MockProjectImpl) Close(p *models.Project) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Close", p)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Close indicates an expected call of Close
+func (mr *MockProjectImplMockRecorder) Close(p interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockProjectImpl)(nil).Close), p)
+}
+
+// CheckForPaid mocks base method
+func (m *MockProjectImpl) CheckForPaid(projectID int) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckForPaid", projectID)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckForPaid indicates an expected call of CheckForPaid
+func (mr *MockProjectImplMockRecorder) CheckForPaid(projectID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckForPaid", reflect.TypeOf((*MockProjectImpl)(nil).CheckForPaid), projectID)
+}
+
+// SetEqualDonation mocks base method
+func (m *MockProjectImpl) SetEqualDonation(p *models.Project) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetEqualDonation", p)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetEqualDonation indicates an expected call of SetEqualDonation
+func (mr *MockProjectImplMockRecorder) SetEqualDonation(p interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetEqualDonation", reflect.TypeOf((*MockProjectImpl)(nil).SetEqualDonation), p)
 }
 
 // MockProjectPaginatorImpl is a mock of ProjectPaginatorImpl interface
