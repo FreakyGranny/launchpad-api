@@ -145,7 +145,10 @@ func (b *Background) CheckSearch(wg *sync.WaitGroup) {
 		if evolved {
 			b.HarverstChan <- project
 		} else {
-			strategy.CloseOutdated(project)
+			err = strategy.CloseOutdated(project)
+			if err != nil {
+				log.Errorf("unable to check outdate for project %d", project.ID)
+			}
 		}
 	}
 }
