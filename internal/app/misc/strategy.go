@@ -13,7 +13,7 @@ type Strategy interface {
 	Recalc(p *models.Project) error
 	CheckSearch(p *models.Project) (bool, error)
 	CheckHarvest(p *models.Project) (bool, error)
-	CloseOutdated(p *models.Project) error
+	CloseOutdated(p *models.Project) (bool, error)
 }
 
 // MoneyStrategy simple money type
@@ -63,14 +63,14 @@ func (s *MoneyStrategy) CheckHarvest(p *models.Project) (bool, error) {
 }
 
 // CloseOutdated check project is outdated
-func (s *MoneyStrategy) CloseOutdated(p *models.Project) error {
+func (s *MoneyStrategy) CloseOutdated(p *models.Project) (bool, error) {
 	n := time.Now()
 	d := p.ReleaseDate
 	if n.Year() == d.Year() && n.Month() == d.Month() && n.Day() > d.Day() {
-		return s.projectModel.Close(p)
+		return true, s.projectModel.Close(p)
 	}
 
-	return nil
+	return false, nil
 }
 
 // EventStrategy simple event type
@@ -112,14 +112,14 @@ func (s *EventStrategy) CheckHarvest(p *models.Project) (bool, error) {
 }
 
 // CloseOutdated check project is outdated
-func (s *EventStrategy) CloseOutdated(p *models.Project) error {
+func (s *EventStrategy) CloseOutdated(p *models.Project) (bool, error) {
 	n := time.Now()
 	d := p.ReleaseDate
 	if n.Year() == d.Year() && n.Month() == d.Month() && n.Day() > d.Day() {
-		return s.projectModel.Close(p)
+		return true, s.projectModel.Close(p)
 	}
 
-	return nil
+	return false, nil
 }
 
 // EventDateStrategy event type with date
@@ -161,7 +161,7 @@ func (s *EventDateStrategy) CheckHarvest(p *models.Project) (bool, error) {
 }
 
 // CloseOutdated check project is outdated
-func (s *EventDateStrategy) CloseOutdated(p *models.Project) error {
+func (s *EventDateStrategy) CloseOutdated(p *models.Project) (bool, error) {
 	return s.baseStrategy.CloseOutdated(p)
 }
 
@@ -209,7 +209,7 @@ func (s *MoneyEqualStrategy) CheckHarvest(p *models.Project) (bool, error) {
 }
 
 // CloseOutdated check project is outdated
-func (s *MoneyEqualStrategy) CloseOutdated(p *models.Project) error {
+func (s *MoneyEqualStrategy) CloseOutdated(p *models.Project) (bool, error) {
 	return s.moneyStrategy.CloseOutdated(p)
 }
 

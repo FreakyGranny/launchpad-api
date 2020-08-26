@@ -21,8 +21,8 @@ type Donation struct {
 	tableName struct{} `pg:"donations,alias:d"` //nolint
 	ID        int      `json:"id"`
 	Payment   int      `json:"payment"`
-	Locked    bool     `json:"locked"`
-	Paid      bool     `json:"paid"`
+	Locked    bool     `pg:",use_zero" json:"locked"`
+	Paid      bool     `pg:",use_zero" json:"paid"`
 	User      User     `json:"-"`
 	UserID    int      `json:"-"`
 	Project   Project  `json:"-"`
@@ -115,7 +115,7 @@ func (r *DonationRepo) Delete(d *Donation) error {
 
 // Update donation
 func (r *DonationRepo) Update(d *Donation) error {
-	_, err := r.db.Model(d).WherePK().UpdateNotZero()
+	_, err := r.db.Model(d).WherePK().Update()
 
 	return err
 

@@ -275,7 +275,7 @@ func (r *ProjectRepo) donationCount(id int) (int, error) {
 
 func (r *ProjectRepo) saveTotal(p *Project, value int) error {
 	p.Total = value
-	_, err := r.db.Model(p).Set("total = ?total").WherePK().Update()
+	_, err := r.db.Model(p).Set("total = ?", p.Total).WherePK().Update()
 
 	return err
 
@@ -317,7 +317,7 @@ func (r *ProjectRepo) Lock(p *Project) error {
 
 // Close project with associated donations
 func (r *ProjectRepo) Close(p *Project) error {
-	_, err := r.db.Model(p).Set("locked = TRUE").WherePK().Update()
+	_, err := r.db.Model(p).Set("closed = TRUE").WherePK().Update()
 	if err != nil {
 		return err
 	}

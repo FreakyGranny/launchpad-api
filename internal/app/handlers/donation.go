@@ -198,25 +198,23 @@ func (h *DonationHandler) UpdateDonation(c echo.Context) error {
 	if !ok {
 		return c.JSON(http.StatusNotFound, errorResponse("donation not found"))
 	}
-	if request.Paid {
+	if donation.Locked {
 		if request.Payment != 0 {
 			return c.JSON(http.StatusBadRequest, errorResponse("payment must be 0"))
 		}
-		if !donation.Locked || donation.Project.OwnerID != userID {
+		if donation.Project.OwnerID != userID {
 			return c.JSON(http.StatusForbidden, errorResponse(err.Error()))
 		}
-	}
-	if !request.Paid {
-		if request.Payment <= 0 {
+		donation.Paid = request.Paid
+	} else {
+		if request.Payment == 0 {
 			return c.JSON(http.StatusBadRequest, errorResponse("payment must be positive"))
 		}
-		if donation.Locked || donation.UserID != userID {
+		if donation.UserID != userID {
 			return c.JSON(http.StatusForbidden, errorResponse(err.Error()))
 		}
+		donation.Payment = request.Payment
 	}
-
-	donation.Paid = request.Paid
-	donation.Payment = request.Payment
 
 	err = h.DonationModel.Update(donation)
 	if err != nil {

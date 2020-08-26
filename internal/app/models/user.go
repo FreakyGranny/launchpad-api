@@ -26,7 +26,7 @@ type User struct {
 	Email        string   `json:"-"`
 	IsAdmin      bool     `json:"-"`
 	ProjectCount int      `json:"project_count"`
-	SuccessRate  float32  `json:"success_rate"`
+	SuccessRate  float64  `json:"success_rate"`
 }
 
 // UserRepo ...

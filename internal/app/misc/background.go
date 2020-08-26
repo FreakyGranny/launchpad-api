@@ -1,6 +1,7 @@
 package misc
 
 import (
+	"math"
 	"sync"
 	"time"
 
@@ -111,6 +112,7 @@ func (b *Background) RecalcProject(wg *sync.WaitGroup) {
 		}
 		err = strategy.Recalc(project)
 		if err != nil {
+			log.Error(err)
 			log.Errorf("unable to recalc project %d", projectID)
 			continue
 		}
@@ -137,19 +139,12 @@ func (b *Background) CheckSearch(wg *sync.WaitGroup) {
 			log.Errorf("unable to get stategy for project %d", project.ID)
 			continue
 		}
-		evolved, err := strategy.CheckSearch(project)
+		_, err = strategy.CheckSearch(project)
 		if err != nil {
 			log.Errorf("unable to check search for project %d", project.ID)
 			continue
 		}
-		if evolved {
-			b.HarverstChan <- project
-		} else {
-			err = strategy.CloseOutdated(project)
-			if err != nil {
-				log.Errorf("unable to check outdate for project %d", project.ID)
-			}
-		}
+		b.HarverstChan <- project
 	}
 }
 
@@ -168,9 +163,20 @@ func (b *Background) HarvestCheck(wg *sync.WaitGroup) {
 			log.Errorf("unable to get stategy for project %d", project.ID)
 			continue
 		}
+		if !project.Locked {
+			closed, err := strategy.CloseOutdated(project)
+			if err != nil {
+				log.Errorf("unable to check outdate for project %d", project.ID)
+			}
+			if closed {
+				b.UpdateChan <- project.OwnerID
+			}
+
+			continue
+		}
 		evolved, err := strategy.CheckHarvest(project)
 		if err != nil {
-			log.Errorf("unable to check search for project %d", project.ID)
+			log.Errorf("unable to check harvest for project %d", project.ID)
 			continue
 		}
 		if evolved {
@@ -211,11 +217,11 @@ func (b *Background) UpdateUser(wg *sync.WaitGroup) {
 	}
 }
 
-func getStats(groups []models.ProjectGroup) (int, float32) {
+func getStats(groups []models.ProjectGroup) (int, float64) {
 	var projectCount int
 	var closedCount int
 	var successCount int
-	var successRate float32
+	var successRate float64
 
 	for _, group := range groups {
 		projectCount += group.Cnt
@@ -227,7 +233,7 @@ func getStats(groups []models.ProjectGroup) (int, float32) {
 		}
 	}
 	if closedCount > 0 {
-		successRate = float32(successCount) / float32(closedCount)
+		successRate = math.Round(float64(successCount) * 100 / float64(closedCount)) / 100
 	}
 
 	return projectCount, successRate

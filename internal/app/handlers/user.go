@@ -12,6 +12,7 @@ import (
 type extendedUser struct {
 	models.User
 	Participation []models.Participation `json:"participation"`
+	// SuccessRate   int                    `json:"success_rate"`
 }
 
 // UserHandler ...
@@ -52,6 +53,7 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, extendedUser{
 		User:          *user,
 		Participation: pts,
+		// SuccessRate:   int(user.SuccessRate),
 	})
 }
 
@@ -83,5 +85,6 @@ func (h *UserHandler) GetUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, extendedUser{
 		User:          *user,
 		Participation: pts,
+		// SuccessRate:   int(user.SuccessRate),
 	})
 }
