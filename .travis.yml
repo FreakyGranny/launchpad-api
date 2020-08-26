@@ -1,0 +1,35 @@
+language: go
+
+go:
+  - "1.14"
+
+os:
+  - linux
+
+git:
+  depth: 1
+  quiet: true
+  submodules: false
+
+notifications:
+  email: false
+
+env:
+  global:
+    - GO111MODULE=on
+    - GOPROXY=https://proxy.golang.org
+
+stages:
+  - name: Tests
+
+jobs:
+  include:
+    - stage: "Tests"
+      name: "Linters"
+      install: go install github.com/golangci/golangci-lint/cmd/golangci-lint
+      script: golangci-lint run ./...
+
+    - stage: "Tests"
+      name: "Unit tests"
+      script: go test -v -count=1 -race -gcflags=-l -timeout=30s -coverprofile=coverage.txt -covermode=atomic ./...
+      after_success: bash <(curl -s https://codecov.io/bash)

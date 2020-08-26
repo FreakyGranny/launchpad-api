@@ -1,0 +1,560 @@
+basePath: /
+definitions:
+  handlers.DonationCreateRequest:
+    properties:
+      payment:
+        type: integer
+      project:
+        type: integer
+    type: object
+  handlers.DonationUpdateRequest:
+    properties:
+      paid:
+        type: boolean
+      payment:
+        type: integer
+    type: object
+  handlers.ProjectCreateResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  handlers.ProjectDetailView:
+    properties:
+      category:
+        $ref: '#/definitions/models.Category'
+        type: object
+      description:
+        type: string
+      event_date:
+        type: string
+      goal_amount:
+        type: integer
+      goal_people:
+        type: integer
+      id:
+        type: integer
+      image_link:
+        type: string
+      instructions:
+        type: string
+      owner:
+        $ref: '#/definitions/models.User'
+        type: object
+      percent:
+        type: integer
+      project_type:
+        $ref: '#/definitions/models.ProjectType'
+        type: object
+      release_date:
+        type: string
+      status:
+        type: string
+      subtitle:
+        type: string
+      title:
+        type: string
+      total:
+        type: integer
+    type: object
+  handlers.ProjectDonation:
+    properties:
+      id:
+        type: integer
+      locked:
+        type: boolean
+      paid:
+        type: boolean
+      user:
+        $ref: '#/definitions/models.User'
+        type: object
+    type: object
+  handlers.ProjectListResponse:
+    properties:
+      has_next:
+        type: boolean
+      next:
+        type: integer
+      results:
+        items:
+          $ref: '#/definitions/handlers.ProjectListView'
+        type: array
+    type: object
+  handlers.ProjectListView:
+    properties:
+      category:
+        $ref: '#/definitions/models.Category'
+        type: object
+      event_date:
+        type: string
+      id:
+        type: integer
+      image_link:
+        type: string
+      percent:
+        type: integer
+      project_type:
+        $ref: '#/definitions/models.ProjectType'
+        type: object
+      release_date:
+        type: string
+      status:
+        type: string
+      subtitle:
+        type: string
+      title:
+        type: string
+      total:
+        type: integer
+    type: object
+  handlers.TokenRequest:
+    properties:
+      code:
+        type: string
+    type: object
+  handlers.TokenResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  handlers.extendedUser:
+    properties:
+      avatar:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: integer
+      last_name:
+        type: string
+      participation:
+        items:
+          $ref: '#/definitions/models.Participation'
+        type: array
+      project_count:
+        type: integer
+      success_rate:
+        type: number
+      username:
+        type: string
+    type: object
+  models.Category:
+    properties:
+      alias:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  models.Donation:
+    properties:
+      id:
+        type: integer
+      locked:
+        type: boolean
+      paid:
+        type: boolean
+      payment:
+        type: integer
+      project:
+        type: integer
+    type: object
+  models.Participation:
+    properties:
+      count:
+        type: integer
+      id:
+        type: integer
+    type: object
+  models.ProjectType:
+    properties:
+      alias:
+        type: string
+      end_by_goal_gain:
+        type: boolean
+      goal_by_amount:
+        type: boolean
+      goal_by_people:
+        type: boolean
+      id:
+        type: integer
+      name:
+        type: string
+      options:
+        items:
+          type: string
+        type: array
+    type: object
+  models.User:
+    properties:
+      avatar:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: integer
+      last_name:
+        type: string
+      project_count:
+        type: integer
+      success_rate:
+        type: number
+      username:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: This is a launchpad backend.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: Launchpad API
+  version: "1.0"
+paths:
+  /category:
+    get:
+      description: Returns list of categories
+      operationId: get-categories
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Category'
+            type: array
+      security:
+      - Bearer: []
+      summary: Returns list of categories
+      tags:
+      - category
+  /donation:
+    get:
+      description: Returns list of user's donations
+      operationId: get-user-donations
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Donation'
+            type: array
+      security:
+      - Bearer: []
+      summary: Returns list of user's donations
+      tags:
+      - donation
+    post:
+      consumes:
+      - application/json
+      description: Create new donation
+      operationId: post-donation
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.DonationCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Donation'
+      security:
+      - Bearer: []
+      summary: Create donation
+      tags:
+      - donation
+  /donation/{id}:
+    delete:
+      description: Delete not locked donation
+      operationId: delete-donation
+      parameters:
+      - description: Donation ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204": {}
+      security:
+      - Bearer: []
+      summary: Delete not locked donation
+      tags:
+      - donation
+    patch:
+      consumes:
+      - application/json
+      description: Update not locked donation
+      operationId: update-donation
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.DonationUpdateRequest'
+      - description: Donation ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Donation'
+      security:
+      - Bearer: []
+      summary: Update not locked donation
+      tags:
+      - donation
+  /donation/project/{id}:
+    get:
+      description: Returns list of project donations
+      operationId: get-project-donations
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.ProjectDonation'
+            type: array
+      security:
+      - Bearer: []
+      summary: Returns list of project donations
+      tags:
+      - donation
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: get token for user
+      operationId: get-token
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.TokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.TokenResponse'
+      summary: Returns access token
+      tags:
+      - auth
+  /project:
+    get:
+      description: Returns list of projects with filters
+      operationId: get-projects
+      parameters:
+      - description: Page num
+        in: query
+        name: page
+        type: integer
+      - description: Capasity of one page
+        in: query
+        name: page_size
+        type: integer
+      - description: Category ID
+        in: query
+        name: category
+        type: integer
+      - description: Project Type ID
+        in: query
+        name: project_type
+        type: integer
+      - description: Return only open
+        in: query
+        name: open
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ProjectListResponse'
+      security:
+      - Bearer: []
+      summary: Returns list of projects
+      tags:
+      - project
+    post:
+      consumes:
+      - application/json
+      description: Create new project
+      operationId: post-project
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.DonationCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ProjectCreateResponse'
+      security:
+      - Bearer: []
+      summary: Create project
+      tags:
+      - project
+  /project/{id}:
+    delete:
+      description: Delete not published project
+      operationId: delete-project
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204": {}
+      security:
+      - Bearer: []
+      summary: Delete not published project
+      tags:
+      - project
+    get:
+      description: Returns project by ID
+      operationId: get-project-by-id
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ProjectDetailView'
+      security:
+      - Bearer: []
+      summary: Show a single project
+      tags:
+      - project
+  /project/user/{id}:
+    get:
+      description: Returns list of projects associated with user with filters
+      operationId: get-user-projects
+      parameters:
+      - description: Return projects where user is owner
+        in: query
+        name: owned
+        type: boolean
+      - description: Return projects where user is contributor
+        in: query
+        name: contributed
+        type: boolean
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.ProjectListView'
+            type: array
+      security:
+      - Bearer: []
+      summary: Returns list of projects associated with user
+      tags:
+      - project
+  /project_type:
+    get:
+      description: Returns list of project types
+      operationId: get-project-types
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.ProjectType'
+            type: array
+      security:
+      - Bearer: []
+      summary: return list of project types
+      tags:
+      - project type
+  /user:
+    get:
+      description: Returns user by ID from token
+      operationId: get-user-by-token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.extendedUser'
+      security:
+      - Bearer: []
+      summary: Show a current user
+      tags:
+      - user
+  /user/{id}:
+    get:
+      description: Returns user by ID
+      operationId: get-user-by-id
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.extendedUser'
+      security:
+      - Bearer: []
+      summary: Show a specific user
+      tags:
+      - user
+securityDefinitions:
+  Bearer:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
