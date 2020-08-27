@@ -1,6 +1,7 @@
 package misc
 
 import (
+	"context"
 	"math"
 	"sync"
 	"time"
@@ -14,7 +15,6 @@ type Background struct {
 	SystemModel  models.SystemImpl
 	ProjectModel models.ProjectImpl
 	UserModel    models.UserImpl
-	DoneChan     chan struct{}
 	RecalcChan   chan int
 	UpdateChan   chan int
 	SearchChan   chan *models.Project
@@ -27,17 +27,11 @@ func NewBackground(ms models.SystemImpl, mp models.ProjectImpl, mu models.UserIm
 		SystemModel:  ms,
 		ProjectModel: mp,
 		UserModel:    mu,
-		DoneChan:     make(chan struct{}, 1),
 		RecalcChan:   make(chan int, 100),
 		UpdateChan:   make(chan int, 100),
 		SearchChan:   make(chan *models.Project, 10),
 		HarverstChan: make(chan *models.Project, 10),
 	}
-}
-
-// Terminate stops all channels
-func (b *Background) Terminate() {
-	close(b.DoneChan)
 }
 
 // GetRecalcPipe returns recalc pipe
@@ -46,7 +40,7 @@ func (b *Background) GetRecalcPipe() chan int {
 }
 
 // PeriodicCheck returns recalc pipe
-func (b *Background) PeriodicCheck(wg *sync.WaitGroup) {
+func (b *Background) PeriodicCheck(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 	defer close(b.RecalcChan)
 	ticker := time.NewTicker(time.Second * 1)
@@ -76,7 +70,7 @@ func (b *Background) PeriodicCheck(wg *sync.WaitGroup) {
 			for _, project := range *projects {
 				b.RecalcChan <- project.ID
 			}
-		case <-b.DoneChan:
+		case <-ctx.Done():
 			log.Info("stop periodic check")
 			return
 		}
@@ -86,6 +80,7 @@ func (b *Background) PeriodicCheck(wg *sync.WaitGroup) {
 // RecalcProject update total for project
 func (b *Background) RecalcProject(wg *sync.WaitGroup) {
 	defer wg.Done()
+	defer close(b.SearchChan)
 	var project *models.Project
 	var ok bool
 
@@ -93,7 +88,6 @@ func (b *Background) RecalcProject(wg *sync.WaitGroup) {
 		projectID, open := <-b.RecalcChan
 		if projectID == 0 && !open {
 			log.Info("stop recalc")
-			close(b.SearchChan)
 			return
 		}
 		project, ok = b.ProjectModel.Get(projectID)
@@ -123,11 +117,11 @@ func (b *Background) RecalcProject(wg *sync.WaitGroup) {
 // CheckSearch check project for search stage
 func (b *Background) CheckSearch(wg *sync.WaitGroup) {
 	defer wg.Done()
+	defer close(b.HarverstChan)
 	for {
 		project, open := <-b.SearchChan
 		if project == nil && !open {
 			log.Info("stop checking search")
-			close(b.HarverstChan)
 			return
 		}
 		if project.Locked {
@@ -151,11 +145,11 @@ func (b *Background) CheckSearch(wg *sync.WaitGroup) {
 // HarvestCheck check project for harvest stage
 func (b *Background) HarvestCheck(wg *sync.WaitGroup) {
 	defer wg.Done()
+	defer close(b.UpdateChan)
 	for {
 		project, open := <-b.HarverstChan
 		if project == nil && !open {
 			log.Info("stop checking harvest")
-			close(b.UpdateChan)
 			return
 		}
 		strategy, err := GetStrategy(&project.ProjectType, b.ProjectModel)
@@ -233,7 +227,7 @@ func getStats(groups []models.ProjectGroup) (int, float64) {
 		}
 	}
 	if closedCount > 0 {
-		successRate = math.Round(float64(successCount) * 100 / float64(closedCount)) / 100
+		successRate = math.Round(float64(successCount)*100/float64(closedCount)) / 100
 	}
 
 	return projectCount, successRate

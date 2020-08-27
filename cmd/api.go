@@ -54,11 +54,13 @@ func API(cmd *cobra.Command, args []string) {
 	pModel := models.NewProjectModel(d)
 	uModel := models.NewUserModel(d)
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	b := misc.NewBackground(models.NewSystemModel(d), pModel, uModel)
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
-	
-	go b.PeriodicCheck(wg)
+
+	go b.PeriodicCheck(ctx, wg)
 	go b.RecalcProject(wg)
 	go b.CheckSearch(wg)
 	go b.HarvestCheck(wg)
@@ -128,11 +130,10 @@ func API(cmd *cobra.Command, args []string) {
 	terminate := make(chan os.Signal, 1)
 	signal.Notify(terminate, os.Interrupt)
 	<-terminate
-	ctx := context.Background()
 	if err := e.Shutdown(ctx); err != nil {
 		e.Logger.Fatal(err)
 	}
-	b.Terminate()
+	cancel()
 }
 
 // NewAPICmd return api command
