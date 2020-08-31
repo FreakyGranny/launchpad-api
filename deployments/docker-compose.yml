@@ -9,3 +9,34 @@ services:
      - ./db-init.sh:/docker-entrypoint-initdb.d/init.sh
     ports:
       - "5432:5432"
+  migrate:
+    image: freakygranny/lpad-api:0.0.1
+    command: ["/app/lpad", "migrate", "up"]
+    environment:
+      - DB_USERNAME=lpad
+      - DB_PASSWORD=qwerty123
+      - DB_NAME=launchpad
+      - DB_HOST=db
+      - VK_APP_ID=deadbief
+      - VK_CLIENT_SECRET=deadbief
+      - VK_REDIRECT_URI=deadbief
+      - JWT_SECRET=deadbief
+    ports:
+      - "1323:1323"
+    depends_on: 
+      - db    
+  api:
+    image: freakygranny/lpad-api:0.0.1
+    environment:
+      - DB_USERNAME=lpad
+      - DB_PASSWORD=qwerty123
+      - DB_NAME=launchpad
+      - DB_HOST=db
+      - VK_APP_ID=deadbief
+      - VK_CLIENT_SECRET=deadbief
+      - VK_REDIRECT_URI=http://localhost:8080/login
+      - JWT_SECRET=superSecret
+    ports:
+      - "1323:1323"
+    depends_on: 
+      - db
