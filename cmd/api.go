@@ -130,6 +130,7 @@ func API(cmd *cobra.Command, args []string) {
 	terminate := make(chan os.Signal, 1)
 	signal.Notify(terminate, os.Interrupt)
 	<-terminate
+	signal.Stop(terminate)
 	if err := e.Shutdown(ctx); err != nil {
 		e.Logger.Fatal(err)
 	}

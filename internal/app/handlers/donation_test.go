@@ -136,7 +136,7 @@ func (s *DonationSuite) TestCreateDonation() {
 	}
 	req := httptest.NewRequest(echo.POST, "/", bytes.NewBuffer(body))
 	req.Header.Set("Content-type", "application/json")
-	
+
 	recalcChan := make(chan int, 1)
 	defer close(recalcChan)
 
@@ -176,7 +176,7 @@ func (s *DonationSuite) TestUpdateDonation() {
 	}
 	req := httptest.NewRequest(echo.PATCH, "/", bytes.NewBuffer(body))
 	req.Header.Set("Content-type", "application/json")
-	
+
 	recalcChan := make(chan int, 1)
 	defer close(recalcChan)
 
@@ -228,8 +228,8 @@ func (s *DonationSuite) TestDeleteDonation() {
 	c.SetParamValues("1")
 
 	expect := &models.Donation{
-		ID: 1,
-		UserID: 111,
+		ID:        1,
+		UserID:    111,
 		ProjectID: 44,
 	}
 

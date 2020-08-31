@@ -143,7 +143,7 @@ func (vk *VkClient) GetUserData(userID int, token string) (*UserData, error) {
 //NewVk initialize VK client
 func NewVk(cfg config.VkAuth) *VkClient {
 	return &VkClient{
-		Client:  &http.Client{},
+		Client:      &http.Client{},
 		AppID:       cfg.AppID,
 		AppSecret:   cfg.ClientSecret,
 		RedirectURI: cfg.RedirectURI,

@@ -50,7 +50,7 @@ func (s *StrategySuite) TearDownTest() {
 
 func (s *StrategySuite) TestGetStrategyMoney() {
 	pt := &models.ProjectType{
-		GoalByAmount: true,
+		GoalByAmount:  true,
 		EndByGoalGain: true,
 	}
 	st, err := GetStrategy(pt, s.mockProject)
@@ -60,7 +60,7 @@ func (s *StrategySuite) TestGetStrategyMoney() {
 
 func (s *StrategySuite) TestGetStrategyEvent() {
 	pt := &models.ProjectType{
-		GoalByPeople: true,
+		GoalByPeople:  true,
 		EndByGoalGain: true,
 	}
 	st, err := GetStrategy(pt, s.mockProject)
@@ -70,7 +70,7 @@ func (s *StrategySuite) TestGetStrategyEvent() {
 
 func (s *StrategySuite) TestGetStrategyEventDate() {
 	pt := &models.ProjectType{
-		GoalByPeople: true,
+		GoalByPeople:  true,
 		EndByGoalGain: false,
 	}
 	st, err := GetStrategy(pt, s.mockProject)
@@ -80,8 +80,8 @@ func (s *StrategySuite) TestGetStrategyEventDate() {
 
 func (s *StrategySuite) TestGetStrategyMoneyEqual() {
 	pt := &models.ProjectType{
-		GoalByAmount: true,
-		GoalByPeople: true,
+		GoalByAmount:  true,
+		GoalByPeople:  true,
 		EndByGoalGain: false,
 	}
 	st, err := GetStrategy(pt, s.mockProject)

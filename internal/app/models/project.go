@@ -39,7 +39,7 @@ type ProjectImpl interface {
 	Lock(p *Project) error
 	Close(p *Project) error
 	CheckForPaid(projectID int) (bool, error)
-	SetEqualDonation(p *Project) error	
+	SetEqualDonation(p *Project) error
 }
 
 // Project model
@@ -348,7 +348,7 @@ func (r *ProjectRepo) CheckForPaid(projectID int) (bool, error) {
 // SetEqualDonation checks if all donations are paid
 func (r *ProjectRepo) SetEqualDonation(p *Project) error {
 	_, err := r.db.Model((*Donation)(nil)).
-		Set("payment = ?", p.GoalAmount / p.GoalPeople).
+		Set("payment = ?", p.GoalAmount/p.GoalPeople).
 		Where("d.project_id = ?", p.ID).
 		Update()
 

@@ -49,14 +49,14 @@ func (s *CategorySuite) TestGetAllCategories() {
 
 	categories := []models.Category{
 		{
-			ID: 1,
+			ID:    1,
 			Alias: "other",
-			Name: "Other",
+			Name:  "Other",
 		},
 		{
-			ID: 2,
+			ID:    2,
 			Alias: "some",
-			Name: "Some",
+			Name:  "Some",
 		},
 	}
 

@@ -22,7 +22,7 @@ func (s *VkProviderSuite) SetupTest() {
 	s.mockCtl = gomock.NewController(s.T())
 	s.mockHTTP = NewMockHTTPClient(s.mockCtl)
 	s.vkClient = &VkClient{
-		Client:  s.mockHTTP,
+		Client:      s.mockHTTP,
 		AppID:       "AppID",
 		AppSecret:   "ClientSecret",
 		RedirectURI: "RedirectURI",

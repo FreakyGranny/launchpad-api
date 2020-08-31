@@ -8,9 +8,9 @@ import (
 
 	"github.com/FreakyGranny/launchpad-api/internal/app/config"
 	"github.com/FreakyGranny/launchpad-api/internal/app/db"
+	_ "github.com/FreakyGranny/launchpad-api/migrations" //
 	"github.com/go-pg/migrations/v8"
 	"github.com/spf13/cobra"
-	_ "github.com/FreakyGranny/launchpad-api/migrations" //
 )
 
 const usageText = `Supported commands are:
@@ -22,6 +22,7 @@ const usageText = `Supported commands are:
   - version - prints current db version.
   - set_version [version] - sets db version without running migrations.
 `
+
 // NewMigrateCmd returns migrate cmd struct
 func NewMigrateCmd() *cobra.Command {
 	return &cobra.Command{
@@ -31,6 +32,7 @@ func NewMigrateCmd() *cobra.Command {
 		Run:   Migrate,
 	}
 }
+
 // Migrate ...
 func Migrate(cmd *cobra.Command, args []string) {
 	cfg, err := config.New()
