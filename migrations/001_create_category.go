@@ -1,7 +1,7 @@
 package migrate
 
 import (
-	"github.com/FreakyGranny/launchpad-api/internal/app/models"
+	"github.com/FreakyGranny/launchpad-api/internal/models"
 	"github.com/go-pg/migrations/v8"
 	"github.com/labstack/gommon/log"
 )

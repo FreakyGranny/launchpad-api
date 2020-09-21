@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/FreakyGranny/launchpad-api/internal/app/config"
+	"github.com/FreakyGranny/launchpad-api/internal/config"
 )
 
 const apiVersion = "5.103"

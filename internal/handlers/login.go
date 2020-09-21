@@ -9,8 +9,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 
-	"github.com/FreakyGranny/launchpad-api/internal/app/auth"
-	"github.com/FreakyGranny/launchpad-api/internal/app/models"
+	"github.com/FreakyGranny/launchpad-api/internal/auth"
+	"github.com/FreakyGranny/launchpad-api/internal/models"
 )
 
 // TokenRequest - request for auth token

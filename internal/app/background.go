@@ -1,4 +1,4 @@
-package misc
+package app
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/FreakyGranny/launchpad-api/internal/app/models"
+	"github.com/FreakyGranny/launchpad-api/internal/models"
 	"github.com/labstack/gommon/log"
 )
 

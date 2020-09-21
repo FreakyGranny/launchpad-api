@@ -1,10 +1,10 @@
-package misc
+package app
 
 import (
 	"testing"
 
-	"github.com/FreakyGranny/launchpad-api/internal/app/mocks"
-	"github.com/FreakyGranny/launchpad-api/internal/app/models"
+	"github.com/FreakyGranny/launchpad-api/internal/mocks"
+	"github.com/FreakyGranny/launchpad-api/internal/models"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
 )

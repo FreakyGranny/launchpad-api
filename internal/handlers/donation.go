@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/FreakyGranny/launchpad-api/internal/app/models"
+	"github.com/FreakyGranny/launchpad-api/internal/models"
 	"github.com/labstack/echo/v4"
 )
 

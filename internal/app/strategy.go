@@ -1,10 +1,10 @@
-package misc
+package app
 
 import (
 	"errors"
 	"time"
 
-	"github.com/FreakyGranny/launchpad-api/internal/app/models"
+	"github.com/FreakyGranny/launchpad-api/internal/models"
 )
 
 // Strategy project strategy depends on type

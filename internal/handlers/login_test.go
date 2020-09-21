@@ -13,9 +13,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/FreakyGranny/launchpad-api/internal/app/auth"
-	"github.com/FreakyGranny/launchpad-api/internal/app/mocks"
-	"github.com/FreakyGranny/launchpad-api/internal/app/models"
+	"github.com/FreakyGranny/launchpad-api/internal/auth"
+	"github.com/FreakyGranny/launchpad-api/internal/mocks"
+	"github.com/FreakyGranny/launchpad-api/internal/models"
 )
 
 type LoginSuite struct {

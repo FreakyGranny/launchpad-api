@@ -5,7 +5,7 @@
 package mocks
 
 import (
-	auth "github.com/FreakyGranny/launchpad-api/internal/app/auth"
+	auth "github.com/FreakyGranny/launchpad-api/internal/auth"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )

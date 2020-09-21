@@ -5,7 +5,7 @@
 package mocks
 
 import (
-	models "github.com/FreakyGranny/launchpad-api/internal/app/models"
+	models "github.com/FreakyGranny/launchpad-api/internal/models"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )

@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/FreakyGranny/launchpad-api/internal/app/models"
+	"github.com/FreakyGranny/launchpad-api/internal/models"
 	"github.com/labstack/echo/v4"
 )
 

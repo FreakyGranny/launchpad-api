@@ -10,12 +10,12 @@ import (
 	"github.com/labstack/gommon/log"
 
 	_ "github.com/FreakyGranny/launchpad-api/docs" // openAPI
-	"github.com/FreakyGranny/launchpad-api/internal/app/auth"
-	"github.com/FreakyGranny/launchpad-api/internal/app/config"
-	"github.com/FreakyGranny/launchpad-api/internal/app/db"
-	"github.com/FreakyGranny/launchpad-api/internal/app/handlers"
-	"github.com/FreakyGranny/launchpad-api/internal/app/misc"
-	"github.com/FreakyGranny/launchpad-api/internal/app/models"
+	"github.com/FreakyGranny/launchpad-api/internal/auth"
+	"github.com/FreakyGranny/launchpad-api/internal/config"
+	"github.com/FreakyGranny/launchpad-api/internal/db"
+	"github.com/FreakyGranny/launchpad-api/internal/handlers"
+	"github.com/FreakyGranny/launchpad-api/internal/app"
+	"github.com/FreakyGranny/launchpad-api/internal/models"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/cobra"
@@ -56,7 +56,7 @@ func API(cmd *cobra.Command, args []string) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	b := misc.NewBackground(models.NewSystemModel(d), pModel, uModel)
+	b := app.NewBackground(models.NewSystemModel(d), pModel, uModel)
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/FreakyGranny/launchpad-api/internal/app/misc"
-	"github.com/FreakyGranny/launchpad-api/internal/app/models"
+	"github.com/FreakyGranny/launchpad-api/internal/app"
+	"github.com/FreakyGranny/launchpad-api/internal/models"
 	"github.com/labstack/echo/v4"
 )
 
@@ -131,7 +131,7 @@ func (h *ProjectHandler) GetProjects(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 	for _, project := range *projects {
-		strategy, err := misc.GetStrategy(&project.ProjectType, h.ProjectModel)
+		strategy, err := app.GetStrategy(&project.ProjectType, h.ProjectModel)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, nil)
 		}
@@ -194,7 +194,7 @@ func (h *ProjectHandler) GetUserProjects(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 	for _, project := range *projects {
-		strategy, err := misc.GetStrategy(&project.ProjectType, h.ProjectModel)
+		strategy, err := app.GetStrategy(&project.ProjectType, h.ProjectModel)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, nil)
 		}
@@ -238,7 +238,7 @@ func (h *ProjectHandler) GetSingleProject(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, nil)
 	}
 
-	strategy, err := misc.GetStrategy(&project.ProjectType, h.ProjectModel)
+	strategy, err := app.GetStrategy(&project.ProjectType, h.ProjectModel)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, nil)
 	}
@@ -357,7 +357,7 @@ func (h *ProjectHandler) UpdateProject(c echo.Context) error {
 	if project.Published || project.OwnerID != userID {
 		return c.JSON(http.StatusForbidden, errorResponse("modification is not allowed"))
 	}
-	strategy, err := misc.GetStrategy(&project.ProjectType, h.ProjectModel)
+	strategy, err := app.GetStrategy(&project.ProjectType, h.ProjectModel)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errorResponse("strategy not found"))
 	}

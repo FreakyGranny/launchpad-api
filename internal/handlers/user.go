@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/FreakyGranny/launchpad-api/internal/app/models"
+	"github.com/FreakyGranny/launchpad-api/internal/models"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 )
@@ -12,7 +12,6 @@ import (
 type extendedUser struct {
 	models.User
 	Participation []models.Participation `json:"participation"`
-	// SuccessRate   int                    `json:"success_rate"`
 }
 
 // UserHandler ...
