@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/FreakyGranny/launchpad-api/internal/app"
 	"github.com/FreakyGranny/launchpad-api/internal/mocks"
 	"github.com/FreakyGranny/launchpad-api/internal/models"
 )
@@ -45,7 +46,8 @@ func (s *ProjectTypeSuite) TestGetAllProjectTypes() {
 	c := e.NewContext(req, rec)
 	c.SetPath("/project_type")
 
-	h := NewProjectTypeHandler(s.mockProjectType)
+	app := app.New(nil, nil , nil, s.mockProjectType, nil, nil, nil, "")
+	h := NewProjectTypeHandler(app)
 
 	projectTypes := []models.ProjectType{
 		{

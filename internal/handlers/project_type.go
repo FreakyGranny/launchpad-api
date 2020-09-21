@@ -3,18 +3,18 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/FreakyGranny/launchpad-api/internal/models"
+	"github.com/FreakyGranny/launchpad-api/internal/app"
 	"github.com/labstack/echo/v4"
 )
 
 // ProjectTypeHandler ...
 type ProjectTypeHandler struct {
-	ProjectTypeModel models.ProjectTypeImpl
+	app app.Application
 }
 
 // NewProjectTypeHandler ...
-func NewProjectTypeHandler(pt models.ProjectTypeImpl) *ProjectTypeHandler {
-	return &ProjectTypeHandler{ProjectTypeModel: pt}
+func NewProjectTypeHandler(a app.Application) *ProjectTypeHandler {
+	return &ProjectTypeHandler{app: a}
 }
 
 // GetProjectTypes godoc
@@ -27,7 +27,7 @@ func NewProjectTypeHandler(pt models.ProjectTypeImpl) *ProjectTypeHandler {
 // @Security Bearer
 // @Router /project_type [get]
 func (h *ProjectTypeHandler) GetProjectTypes(c echo.Context) error {
-	projectTypes, err := h.ProjectTypeModel.GetAll()
+	projectTypes, err := h.app.GetProjectTypes()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errorResponse("unable to get project types"))
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/FreakyGranny/launchpad-api/internal/app"
 	"github.com/FreakyGranny/launchpad-api/internal/auth"
 	"github.com/FreakyGranny/launchpad-api/internal/mocks"
 	"github.com/FreakyGranny/launchpad-api/internal/models"
@@ -63,12 +64,9 @@ func (s *LoginSuite) TestWithCreateUser() {
 	c := e.NewContext(req, rec)
 	c.SetPath("/login")
 
-	h := NewAuthHandler(
-		"secret",
-		s.mockUser,
-		s.mockProvider,
-		clockwork.NewFakeClock(),
-	)
+	app := app.New(nil, s.mockUser, nil, nil, nil, s.mockProvider, clockwork.NewFakeClock(), "secret")
+	h := NewAuthHandler(app)
+
 	a := &auth.AccessData{
 		AccessToken: "token",
 		Expires:     123,
@@ -115,12 +113,9 @@ func (s *LoginSuite) TestWithUpdateUser() {
 	c := e.NewContext(req, rec)
 	c.SetPath("/login")
 
-	h := NewAuthHandler(
-		"secret",
-		s.mockUser,
-		s.mockProvider,
-		clockwork.NewFakeClock(),
-	)
+	app := app.New(nil, s.mockUser, nil, nil, nil, s.mockProvider, clockwork.NewFakeClock(), "secret")
+	h := NewAuthHandler(app)
+
 	a := &auth.AccessData{
 		AccessToken: "token",
 		Expires:     123,

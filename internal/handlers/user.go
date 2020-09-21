@@ -4,24 +4,18 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/FreakyGranny/launchpad-api/internal/models"
+	"github.com/FreakyGranny/launchpad-api/internal/app"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
 )
-
-type extendedUser struct {
-	models.User
-	Participation []models.Participation `json:"participation"`
-}
 
 // UserHandler ...
 type UserHandler struct {
-	UserModel models.UserImpl
+	app app.Application
 }
 
 // NewUserHandler ...
-func NewUserHandler(u models.UserImpl) *UserHandler {
-	return &UserHandler{UserModel: u}
+func NewUserHandler(a app.Application) *UserHandler {
+	return &UserHandler{app: a}
 }
 
 // GetCurrentUser godoc
@@ -30,7 +24,7 @@ func NewUserHandler(u models.UserImpl) *UserHandler {
 // @Tags user
 // @ID get-user-by-token
 // @Produce json
-// @Success 200 {object} extendedUser
+// @Success 200 {object} app.ExtendedUser
 // @Security Bearer
 // @Router /user [get]
 func (h *UserHandler) GetCurrentUser(c echo.Context) error {
@@ -38,22 +32,16 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err)
 	}
-	user, ok := h.UserModel.Get(userID)
-	if !ok {
+
+	user, err := h.app.GetUser(userID)
+	switch err {
+	case app.ErrUserNotFound:
 		return c.JSON(http.StatusNotFound, nil)
+	case nil:
+		return c.JSON(http.StatusOK, user)
+	default:
+		return c.JSON(http.StatusInternalServerError, errorResponse("unexpected error"))
 	}
-
-	pts, err := h.UserModel.GetParticipation(userID)
-	if err != nil {
-		log.Error(err)
-		return c.JSON(http.StatusInternalServerError, errorResponse("cant get participation"))
-	}
-
-	return c.JSON(http.StatusOK, extendedUser{
-		User:          *user,
-		Participation: pts,
-		// SuccessRate:   int(user.SuccessRate),
-	})
 }
 
 // GetUser godoc
@@ -63,7 +51,7 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 // @ID get-user-by-id
 // @Produce json
 // @Param id path int true "User ID"
-// @Success 200 {object} extendedUser
+// @Success 200 {object} app.ExtendedUser
 // @Security Bearer
 // @Router /user/{id} [get]
 func (h *UserHandler) GetUser(c echo.Context) error {
@@ -71,19 +59,13 @@ func (h *UserHandler) GetUser(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, errorResponse("wrong ID"))
 	}
-	user, ok := h.UserModel.Get(intID)
-	if !ok {
+	user, err := h.app.GetUser(intID)
+	switch err {
+	case app.ErrUserNotFound:
 		return c.JSON(http.StatusNotFound, nil)
+	case nil:
+		return c.JSON(http.StatusOK, user)
+	default:
+		return c.JSON(http.StatusInternalServerError, errorResponse("unexpected error"))
 	}
-	pts, err := h.UserModel.GetParticipation(intID)
-	if err != nil {
-		log.Error(err)
-		return c.JSON(http.StatusInternalServerError, errorResponse("cant get participation"))
-	}
-
-	return c.JSON(http.StatusOK, extendedUser{
-		User:          *user,
-		Participation: pts,
-		// SuccessRate:   int(user.SuccessRate),
-	})
 }

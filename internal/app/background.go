@@ -19,6 +19,7 @@ type Background struct {
 	UpdateChan   chan int
 	SearchChan   chan *models.Project
 	HarverstChan chan *models.Project
+	wg           *sync.WaitGroup
 }
 
 // NewBackground return new background instance
@@ -31,12 +32,29 @@ func NewBackground(ms models.SystemImpl, mp models.ProjectImpl, mu models.UserIm
 		UpdateChan:   make(chan int, 100),
 		SearchChan:   make(chan *models.Project, 10),
 		HarverstChan: make(chan *models.Project, 10),
+		wg:           &sync.WaitGroup{},
 	}
 }
 
 // GetRecalcPipe returns recalc pipe
 func (b *Background) GetRecalcPipe() chan int {
 	return b.RecalcChan
+}
+
+// Start starts background pipeline.
+func (b *Background) Start(ctx context.Context) {
+	go b.PeriodicCheck(ctx, b.wg)
+	go b.RecalcProject(b.wg)
+	go b.CheckSearch(b.wg)
+	go b.HarvestCheck(b.wg)
+	go b.UpdateUser(b.wg)
+	b.wg.Add(5)
+
+}
+
+// Wait waits background pipeline.
+func (b *Background) Wait() {
+	b.wg.Wait()
 }
 
 // PeriodicCheck returns recalc pipe

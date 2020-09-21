@@ -12,6 +12,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/FreakyGranny/launchpad-api/internal/app"
 	"github.com/FreakyGranny/launchpad-api/internal/mocks"
 	"github.com/FreakyGranny/launchpad-api/internal/models"
 )
@@ -48,7 +49,8 @@ func (s *UserSuite) TestGetUserByID() {
 	c.SetParamNames("id")
 	c.SetParamValues("1")
 
-	h := NewUserHandler(s.mockUser)
+	app := app.New(nil, s.mockUser , nil, nil, nil, nil, nil, "")
+	h := NewUserHandler(app)
 
 	user := &models.User{
 		ID:        1,
@@ -89,7 +91,8 @@ func (s *UserSuite) TestGetUserNotFound() {
 	c.SetParamNames("id")
 	c.SetParamValues("1")
 
-	h := NewUserHandler(s.mockUser)
+	app := app.New(nil, s.mockUser , nil, nil, nil, nil, nil, "")
+	h := NewUserHandler(app)
 
 	s.mockUser.EXPECT().Get(1).Return(&models.User{}, false)
 
@@ -119,7 +122,8 @@ func (s *UserSuite) TestGetCurrentUser() {
 	claims["id"] = float64(user.ID)
 
 	c.Set("user", token)
-	h := NewUserHandler(s.mockUser)
+	app := app.New(nil, s.mockUser , nil, nil, nil, nil, nil, "")
+	h := NewUserHandler(app)
 
 	s.mockUser.EXPECT().Get(1).Return(user, true)
 	pts := []models.Participation{

@@ -3,18 +3,18 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/FreakyGranny/launchpad-api/internal/models"
+	"github.com/FreakyGranny/launchpad-api/internal/app"
 	"github.com/labstack/echo/v4"
 )
 
 // CategoryHandler ...
 type CategoryHandler struct {
-	CategoryModel models.CategoryImpl
+	app app.Application
 }
 
 // NewCategoryHandler ...
-func NewCategoryHandler(c models.CategoryImpl) *CategoryHandler {
-	return &CategoryHandler{CategoryModel: c}
+func NewCategoryHandler(a app.Application) *CategoryHandler {
+	return &CategoryHandler{app: a}
 }
 
 // GetCategories godoc
@@ -27,7 +27,7 @@ func NewCategoryHandler(c models.CategoryImpl) *CategoryHandler {
 // @Security Bearer
 // @Router /category [get]
 func (h *CategoryHandler) GetCategories(c echo.Context) error {
-	categories, err := h.CategoryModel.GetAll()
+	categories, err := h.app.GetCategories()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errorResponse("unable to get categories"))
 	}

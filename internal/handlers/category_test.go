@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/FreakyGranny/launchpad-api/internal/app"
 	"github.com/FreakyGranny/launchpad-api/internal/mocks"
 	"github.com/FreakyGranny/launchpad-api/internal/models"
 )
@@ -45,7 +46,8 @@ func (s *CategorySuite) TestGetAllCategories() {
 	c := e.NewContext(req, rec)
 	c.SetPath("/category")
 
-	h := NewCategoryHandler(s.mockCategory)
+	app := app.New(s.mockCategory, nil, nil, nil, nil, nil, nil, "")
+	h := NewCategoryHandler(app)
 
 	categories := []models.Category{
 		{
@@ -78,7 +80,8 @@ func (s *CategorySuite) TestNoCategories() {
 	c := e.NewContext(req, rec)
 	c.SetPath("/category")
 
-	h := NewCategoryHandler(s.mockCategory)
+	app := app.New(s.mockCategory, nil, nil, nil, nil, nil, nil, "")
+	h := NewCategoryHandler(app)
 	s.mockCategory.EXPECT().GetAll().Return([]models.Category{}, nil)
 
 	s.Require().NoError(h.GetCategories(c))
