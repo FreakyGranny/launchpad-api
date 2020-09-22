@@ -27,8 +27,8 @@ const (
 // ProjectImpl ...
 type ProjectImpl interface {
 	Get(id int) (*Project, bool)
-	GetProjectsWithPagination(f *ProjectListFilter) (ProjectPaginatorImpl, error)
-	GetUserProjects(f *ProjectUserFilter) (*[]Project, error)
+	GetProjectsWithPagination(category, projectType, page, pageSize int, onlyOpen bool) (ProjectPaginatorImpl, error)
+	GetUserProjects(user int, contributed, owned bool) (*[]Project, error)
 	GetActiveProjects() (*[]Project, error)
 	Create(p *Project) error
 	Update(p *Project) error
@@ -83,22 +83,6 @@ func (p *Project) Status() string {
 	}
 
 	return StatusSearch
-}
-
-// ProjectListFilter ...
-type ProjectListFilter struct {
-	Category    int
-	ProjectType int
-	OnlyOpen    bool
-	PageSize    int
-	Page        int
-}
-
-// ProjectUserFilter ...
-type ProjectUserFilter struct {
-	UserID      int
-	Contributed bool
-	Owned       bool
 }
 
 // ProjectPaginatorImpl ...
@@ -175,16 +159,16 @@ func (r *ProjectRepo) GetActiveProjects() (*[]Project, error) {
 }
 
 // GetProjectsWithPagination ...
-func (r *ProjectRepo) GetProjectsWithPagination(f *ProjectListFilter) (ProjectPaginatorImpl, error) {
+func (r *ProjectRepo) GetProjectsWithPagination(category, projectType, page, pageSize int, onlyOpen bool) (ProjectPaginatorImpl, error) {
 	projects := []Project{}
 	q := r.db.Model(&projects).Relation("Category").Relation("ProjectType").Where("p.published = ?", true)
-	if f.Category != 0 {
-		q = q.Where("category_id = ?", f.Category)
+	if category != 0 {
+		q = q.Where("category_id = ?", category)
 	}
-	if f.ProjectType != 0 {
-		q = q.Where("project_type_id = ?", f.ProjectType)
+	if projectType != 0 {
+		q = q.Where("project_type_id = ?", projectType)
 	}
-	if f.OnlyOpen {
+	if onlyOpen {
 		q = q.Where("closed = ?", false)
 	}
 	x, err := q.Count()
@@ -195,20 +179,20 @@ func (r *ProjectRepo) GetProjectsWithPagination(f *ProjectListFilter) (ProjectPa
 		EntryCount: x,
 		Query:      q,
 		Values:     &projects,
-		Page:       f.Page,
-		PageSize:   f.PageSize,
+		Page:       page,
+		PageSize:   pageSize,
 	}, nil
 }
 
 // GetUserProjects ...
-func (r *ProjectRepo) GetUserProjects(f *ProjectUserFilter) (*[]Project, error) {
+func (r *ProjectRepo) GetUserProjects(user int, contributed, owned bool) (*[]Project, error) {
 	projects := []Project{}
-	q := r.db.Model(&projects).Relation("Category").Relation("ProjectType").Where("owner_id = ?", f.UserID)
-	if !f.Owned {
+	q := r.db.Model(&projects).Relation("Category").Relation("ProjectType").Where("owner_id = ?", user)
+	if !owned {
 		q = q.Where("p.published = ?", true)
 	}
-	if f.Contributed {
-		cProjects := r.db.Model((*Donation)(nil)).ColumnExpr("project_id").Where("user_id = ?", f.UserID)
+	if contributed {
+		cProjects := r.db.Model((*Donation)(nil)).ColumnExpr("project_id").Where("user_id = ?", user)
 		q = q.Where("p.id IN (?)", cProjects)
 	}
 	err := q.Limit(userProjectCountLimit).Order("id DESC").Select()

@@ -1,7 +1,6 @@
 package app
 
 import (
-	"errors"
 	"time"
 
 	"github.com/FreakyGranny/launchpad-api/internal/models"
@@ -232,5 +231,5 @@ func GetStrategy(pt *models.ProjectType, r models.ProjectImpl) (Strategy, error)
 		}
 	}
 
-	return nil, errors.New("no matched strategy")
+	return nil, ErrNoStrategy
 }

@@ -4,12 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/FreakyGranny/launchpad-api/internal/app"
 	"github.com/dgrijalva/jwt-go"
-)
-
-const (
-	dateLayout     = "2006-01-02"
-	dateTimeLayout = "2006-01-02 15:04:05"
 )
 
 func errorResponse(message string) map[string]string {
@@ -31,7 +27,7 @@ func getUserIDFromToken(t interface{}) (int, error) {
 
 func parseDate(value string) (time.Time, error) {
 	if value != "" {
-		return time.Parse(dateLayout, value)
+		return time.Parse(app.DateLayout, value)
 	}
 
 	return time.Time{}, nil
@@ -39,7 +35,7 @@ func parseDate(value string) (time.Time, error) {
 
 func parseDateTime(value string) (time.Time, error) {
 	if value != "" {
-		return time.Parse(dateTimeLayout, value)
+		return time.Parse(app.DateTimeLayout, value)
 	}
 
 	return time.Time{}, nil

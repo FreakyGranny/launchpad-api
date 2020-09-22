@@ -49,33 +49,33 @@ func (mr *MockProjectImplMockRecorder) Get(id interface{}) *gomock.Call {
 }
 
 // GetProjectsWithPagination mocks base method
-func (m *MockProjectImpl) GetProjectsWithPagination(f *models.ProjectListFilter) (models.ProjectPaginatorImpl, error) {
+func (m *MockProjectImpl) GetProjectsWithPagination(category, projectType, page, pageSize int, onlyOpen bool) (models.ProjectPaginatorImpl, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetProjectsWithPagination", f)
+	ret := m.ctrl.Call(m, "GetProjectsWithPagination", category, projectType, page, pageSize, onlyOpen)
 	ret0, _ := ret[0].(models.ProjectPaginatorImpl)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetProjectsWithPagination indicates an expected call of GetProjectsWithPagination
-func (mr *MockProjectImplMockRecorder) GetProjectsWithPagination(f interface{}) *gomock.Call {
+func (mr *MockProjectImplMockRecorder) GetProjectsWithPagination(category, projectType, page, pageSize, onlyOpen interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjectsWithPagination", reflect.TypeOf((*MockProjectImpl)(nil).GetProjectsWithPagination), f)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjectsWithPagination", reflect.TypeOf((*MockProjectImpl)(nil).GetProjectsWithPagination), category, projectType, page, pageSize, onlyOpen)
 }
 
 // GetUserProjects mocks base method
-func (m *MockProjectImpl) GetUserProjects(f *models.ProjectUserFilter) (*[]models.Project, error) {
+func (m *MockProjectImpl) GetUserProjects(user int, contributed, owned bool) (*[]models.Project, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserProjects", f)
+	ret := m.ctrl.Call(m, "GetUserProjects", user, contributed, owned)
 	ret0, _ := ret[0].(*[]models.Project)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUserProjects indicates an expected call of GetUserProjects
-func (mr *MockProjectImplMockRecorder) GetUserProjects(f interface{}) *gomock.Call {
+func (mr *MockProjectImplMockRecorder) GetUserProjects(user, contributed, owned interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserProjects", reflect.TypeOf((*MockProjectImpl)(nil).GetUserProjects), f)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserProjects", reflect.TypeOf((*MockProjectImpl)(nil).GetUserProjects), user, contributed, owned)
 }
 
 // GetActiveProjects mocks base method

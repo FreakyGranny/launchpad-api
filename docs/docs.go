@@ -325,44 +325,6 @@ var doc = `{
                         }
                     }
                 }
-            },
-            "post": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "Create new project",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "project"
-                ],
-                "summary": "Create project",
-                "operationId": "post-project",
-                "parameters": [
-                    {
-                        "description": "Request body",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handlers.DonationCreateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ProjectCreateResponse"
-                        }
-                    }
-                }
             }
         },
         "/project/user/{id}": {
@@ -448,31 +410,6 @@ var doc = `{
                         }
                     }
                 }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "Delete not published project",
-                "tags": [
-                    "project"
-                ],
-                "summary": "Delete not published project",
-                "operationId": "delete-project",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Project ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {}
-                }
             }
         },
         "/project_type": {
@@ -524,7 +461,7 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.extendedUser"
+                            "$ref": "#/definitions/app.ExtendedUser"
                         }
                     }
                 }
@@ -559,7 +496,7 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.extendedUser"
+                            "$ref": "#/definitions/app.ExtendedUser"
                         }
                     }
                 }
@@ -567,6 +504,38 @@ var doc = `{
         }
     },
     "definitions": {
+        "app.ExtendedUser": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "participation": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Participation"
+                    }
+                },
+                "project_count": {
+                    "type": "integer"
+                },
+                "success_rate": {
+                    "type": "number"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
         "handlers.DonationCreateRequest": {
             "type": "object",
             "properties": {
@@ -585,14 +554,6 @@ var doc = `{
                     "type": "boolean"
                 },
                 "payment": {
-                    "type": "integer"
-                }
-            }
-        },
-        "handlers.ProjectCreateResponse": {
-            "type": "object",
-            "properties": {
-                "id": {
                     "type": "integer"
                 }
             }
@@ -740,38 +701,6 @@ var doc = `{
             "type": "object",
             "properties": {
                 "token": {
-                    "type": "string"
-                }
-            }
-        },
-        "handlers.extendedUser": {
-            "type": "object",
-            "properties": {
-                "avatar": {
-                    "type": "string"
-                },
-                "first_name": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "last_name": {
-                    "type": "string"
-                },
-                "participation": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Participation"
-                    }
-                },
-                "project_count": {
-                    "type": "integer"
-                },
-                "success_rate": {
-                    "type": "number"
-                },
-                "username": {
                     "type": "string"
                 }
             }

@@ -15,3 +15,17 @@ var (
 	// ErrGetUserParticipation error getting user participation
 	ErrGetUserParticipation = errors.New("cant get user participation")
 )
+
+var (
+	// ErrProjectRetrieve error getting projects.
+	ErrProjectRetrieve = errors.New("unable to get projects")
+	// ErrProjectNotFound project with given id not found.
+	ErrProjectNotFound = errors.New("project not found")
+	// ErrProjectModifyNotAllowed project modifying not allowed.
+	ErrProjectModifyNotAllowed = errors.New("modifying forbidden")
+)
+
+var (
+	// ErrNoStrategy no mathed strategy for project type.
+	ErrNoStrategy = errors.New("no matched strategy")
+)

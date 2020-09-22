@@ -15,6 +15,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/FreakyGranny/launchpad-api/internal/app"
 	"github.com/FreakyGranny/launchpad-api/internal/mocks"
 	"github.com/FreakyGranny/launchpad-api/internal/models"
 )
@@ -93,7 +94,8 @@ func (s *ProjectSuite) TestGetSingleProject() {
 	c.SetParamNames("id")
 	c.SetParamValues("1")
 
-	h := NewProjectHandler(s.mockProject)
+	app := app.New(nil, nil , s.mockProject, nil, nil, nil, nil, "")
+	h := NewProjectHandler(app)
 
 	project := &models.Project{
 		ID:        1,
@@ -160,7 +162,8 @@ func (s *ProjectSuite) TestCreateProject() {
 	claims["id"] = float64(113)
 	c.Set("user", token)
 
-	h := NewProjectHandler(s.mockProject)
+	app := app.New(nil, nil , s.mockProject, nil, nil, nil, nil, "")
+	h := NewProjectHandler(app)
 
 	expect := models.Project{
 		Title:         reqStruct.Title,
@@ -205,7 +208,8 @@ func (s *ProjectSuite) TestUpdateProject() {
 	claims["id"] = float64(42)
 	c.Set("user", token)
 
-	h := NewProjectHandler(s.mockProject)
+	app := app.New(nil, nil , s.mockProject, nil, nil, nil, nil, "")
+	h := NewProjectHandler(app)
 
 	expect := &models.Project{
 		ID:    17,
@@ -241,7 +245,8 @@ func (s *ProjectSuite) TestDeleteProject() {
 	claims["id"] = float64(111)
 	c.Set("user", token)
 
-	h := NewProjectHandler(s.mockProject)
+	app := app.New(nil, nil , s.mockProject, nil, nil, nil, nil, "")
+	h := NewProjectHandler(app)
 	expect := &models.Project{
 		ID:      1,
 		OwnerID: 111,
@@ -268,16 +273,10 @@ func (s *ProjectSuite) TestGetProjectsWithPagination() {
 	c.QueryParams().Add("page", strconv.Itoa(page))
 	c.QueryParams().Add("page_size", strconv.Itoa(pageSize))
 
-	h := NewProjectHandler(s.mockProject)
+	app := app.New(nil, nil , s.mockProject, nil, nil, nil, nil, "")
+	h := NewProjectHandler(app)
 
-	filter := models.ProjectListFilter{
-		Category:    1,
-		ProjectType: 2,
-		OnlyOpen:    true,
-		PageSize:    pageSize,
-		Page:        page,
-	}
-	s.mockProject.EXPECT().GetProjectsWithPagination(&filter).Return(s.mockPaginator, nil)
+	s.mockProject.EXPECT().GetProjectsWithPagination(1, 2, page, pageSize, true).Return(s.mockPaginator, nil)
 
 	s.mockPaginator.EXPECT().NextPage().Return(0, false)
 	s.mockPaginator.EXPECT().Retrieve().Return(s.makeProjectList(), nil)
@@ -302,13 +301,9 @@ func (s *ProjectSuite) TestGetUserProjects() {
 	c.QueryParams().Add("owned", "true")
 	c.QueryParams().Add("contributed", "true")
 
-	h := NewProjectHandler(s.mockProject)
-	filter := models.ProjectUserFilter{
-		UserID:      1,
-		Owned:       true,
-		Contributed: true,
-	}
-	s.mockProject.EXPECT().GetUserProjects(&filter).Return(s.makeProjectList(), nil)
+	app := app.New(nil, nil , s.mockProject, nil, nil, nil, nil, "")
+	h := NewProjectHandler(app)
+	s.mockProject.EXPECT().GetUserProjects(1, true, true).Return(s.makeProjectList(), nil)
 
 	s.Require().NoError(h.GetUserProjects(c))
 	s.Require().Equal(http.StatusOK, rec.Code)

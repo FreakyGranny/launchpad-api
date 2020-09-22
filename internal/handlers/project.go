@@ -31,26 +31,6 @@ type ProjectListView struct {
 	ProjectType models.ProjectType `json:"project_type"`
 }
 
-// ProjectDetailView light project entry
-type ProjectDetailView struct {
-	ID           int                `json:"id"`
-	Title        string             `json:"title"`
-	SubTitle     string             `json:"subtitle"`
-	Status       string             `json:"status"`
-	ReleaseDate  string             `json:"release_date"`
-	EventDate    *string            `json:"event_date"`
-	ImageLink    string             `json:"image_link"`
-	Total        int                `json:"total"`
-	Percent      int                `json:"percent"`
-	Category     models.Category    `json:"category"`
-	ProjectType  models.ProjectType `json:"project_type"`
-	GoalPeople   int                `json:"goal_people"`
-	GoalAmount   int                `json:"goal_amount"`
-	Description  string             `json:"description"`
-	Instructions string             `json:"instructions"`
-	Owner        models.User        `json:"owner"`
-}
-
 // ProjectModifyRequest Request for project creation
 type ProjectModifyRequest struct {
 	Title         string `json:"title"`
@@ -75,12 +55,12 @@ type ProjectCreateResponse struct {
 
 // ProjectHandler ...
 type ProjectHandler struct {
-	ProjectModel models.ProjectImpl
+	app          app.Application
 }
 
 // NewProjectHandler ...
-func NewProjectHandler(m models.ProjectImpl) *ProjectHandler {
-	return &ProjectHandler{ProjectModel: m}
+func NewProjectHandler(a app.Application) *ProjectHandler {
+	return &ProjectHandler{app: a}
 }
 
 // GetProjects godoc
@@ -110,55 +90,38 @@ func (h *ProjectHandler) GetProjects(c echo.Context) error {
 	if err != nil || pageSizeInt == 0 {
 		pageSizeInt = 10
 	}
-	pFilter := &models.ProjectListFilter{
-		Category:    categoryInt,
-		ProjectType: typeInt,
-		OnlyOpen:    onlyOpen,
-		Page:        pageInt,
-		PageSize:    pageSizeInt,
-	}
 
-	paginator, err := h.ProjectModel.GetProjectsWithPagination(pFilter)
+	projects, next, hasNext, err := h.app.GetProjectsWithPagination(categoryInt, typeInt, pageInt, pageSizeInt, onlyOpen)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
-	next, hasNext := paginator.NextPage()
 
+	return c.JSON(http.StatusOK, ProjectListResponse{
+		Results:  projectToListView(projects),
+		NextPage: next,
+		HasNext:  hasNext,
+	})
+}
+
+func projectToListView(projects []*app.ExtendedProject) []ProjectListView {
 	projectListEntries := make([]ProjectListView, 0)
-
-	projects, err := paginator.Retrieve()
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
-	}
-	for _, project := range *projects {
-		strategy, err := app.GetStrategy(&project.ProjectType, h.ProjectModel)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, nil)
-		}
+	for _, project := range projects {
 		plv := ProjectListView{
 			ID:          project.ID,
 			Title:       project.Title,
 			SubTitle:    project.SubTitle,
-			Status:      project.Status(),
-			ReleaseDate: project.ReleaseDate.Format(dateLayout),
+			Status:      project.Status,
+			ReleaseDate: project.ReleaseDate,
 			ImageLink:   project.ImageLink,
 			Total:       project.Total,
-			Percent:     strategy.Percent(&project),
+			Percent:     project.Percent,
 			Category:    project.Category,
 			ProjectType: project.ProjectType,
-		}
-		if !project.EventDate.IsZero() {
-			ed := project.EventDate.Format(dateTimeLayout)
-			plv.EventDate = &ed
 		}
 		projectListEntries = append(projectListEntries, plv)
 	}
 
-	return c.JSON(http.StatusOK, ProjectListResponse{
-		Results:  projectListEntries,
-		NextPage: next,
-		HasNext:  hasNext,
-	})
+	return projectListEntries
 }
 
 // GetUserProjects godoc
@@ -181,43 +144,12 @@ func (h *ProjectHandler) GetUserProjects(c echo.Context) error {
 	onlyOwned, _ := strconv.ParseBool(c.QueryParam("owned"))
 	onlyContributed, _ := strconv.ParseBool(c.QueryParam("contributed"))
 
-	pFilter := &models.ProjectUserFilter{
-		UserID:      userID,
-		Contributed: onlyContributed,
-		Owned:       onlyOwned,
-	}
-
-	projects, err := h.ProjectModel.GetUserProjects(pFilter)
-
-	projectListEntries := make([]ProjectListView, 0)
+	projects, err := h.app.GetUserProjects(userID, onlyContributed, onlyOwned)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
-	for _, project := range *projects {
-		strategy, err := app.GetStrategy(&project.ProjectType, h.ProjectModel)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, nil)
-		}
-		plv := ProjectListView{
-			ID:          project.ID,
-			Title:       project.Title,
-			SubTitle:    project.SubTitle,
-			Status:      project.Status(),
-			ReleaseDate: project.ReleaseDate.Format(dateLayout),
-			ImageLink:   project.ImageLink,
-			Total:       project.Total,
-			Percent:     strategy.Percent(&project),
-			Category:    project.Category,
-			ProjectType: project.ProjectType,
-		}
-		if !project.EventDate.IsZero() {
-			ed := project.EventDate.Format(dateTimeLayout)
-			plv.EventDate = &ed
-		}
-		projectListEntries = append(projectListEntries, plv)
-	}
 
-	return c.JSON(http.StatusOK, projectListEntries)
+	return c.JSON(http.StatusOK, projectToListView(projects))
 }
 
 // GetSingleProject godoc
@@ -227,48 +159,21 @@ func (h *ProjectHandler) GetUserProjects(c echo.Context) error {
 // @ID get-project-by-id
 // @Produce json
 // @Param id path int true "Project ID"
-// @Success 200 {object} ProjectDetailView
+// @Success 200 {object} app.ExtendedProject
 // @Security Bearer
 // @Router /project/{id} [get]
 func (h *ProjectHandler) GetSingleProject(c echo.Context) error {
 	projectID, _ := strconv.Atoi(c.Param("id"))
 
-	project, ok := h.ProjectModel.Get(projectID)
-	if !ok {
+	project, err := h.app.GetProject(projectID)
+	switch err {
+	case app.ErrProjectNotFound:
 		return c.JSON(http.StatusNotFound, nil)
+	case nil:
+		return c.JSON(http.StatusOK, project)
+	default:
+		return c.JSON(http.StatusInternalServerError, err)
 	}
-
-	strategy, err := app.GetStrategy(&project.ProjectType, h.ProjectModel)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, nil)
-	}
-
-	projectResponse := ProjectDetailView{
-		ID:           project.ID,
-		Title:        project.Title,
-		SubTitle:     project.SubTitle,
-		Status:       project.Status(),
-		ReleaseDate:  project.ReleaseDate.Format(dateLayout),
-		ImageLink:    project.ImageLink,
-		Total:        project.Total,
-		Percent:      strategy.Percent(project),
-		Category:     project.Category,
-		ProjectType:  project.ProjectType,
-		GoalPeople:   project.GoalPeople,
-		GoalAmount:   project.GoalAmount,
-		Description:  project.Description,
-		Instructions: project.Instructions,
-		Owner:        project.Owner,
-	}
-
-	if project.EventDate.IsZero() {
-		projectResponse.EventDate = nil
-	} else {
-		ed := project.EventDate.Format(dateTimeLayout)
-		projectResponse.EventDate = &ed
-	}
-
-	return c.JSON(http.StatusOK, projectResponse)
 }
 
 // CreateProject create new project
@@ -299,29 +204,23 @@ func (h *ProjectHandler) CreateProject(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, errorResponse("wrong event date"))
 	}
-
-	newProject := models.Project{
-		OwnerID:       userID,
-		Title:         cpRequest.Title,
-		SubTitle:      cpRequest.SubTitle,
-		ReleaseDate:   releaseDate,
-		EventDate:     eventTime,
-		GoalPeople:    cpRequest.GoalPeople,
-		GoalAmount:    cpRequest.GoalAmount,
-		Description:   cpRequest.Description,
-		ImageLink:     cpRequest.ImageLink,
-		Instructions:  cpRequest.Instructions,
-		CategoryID:    cpRequest.Category,
-		ProjectTypeID: cpRequest.ProjectType,
-		Closed:        false,
-		Locked:        false,
-		Published:     false,
-		Total:         0,
-	}
-	err = h.ProjectModel.Create(&newProject)
+	id, err := h.app.CreateProject(
+		userID, 
+		cpRequest.GoalPeople, 
+		cpRequest.GoalAmount, 
+		cpRequest.Category, 
+		cpRequest.ProjectType,
+		cpRequest.Title,
+		cpRequest.SubTitle,
+		cpRequest.Description,
+		cpRequest.ImageLink,
+		cpRequest.Instructions,
+		releaseDate,
+		eventTime,
+	)
 	switch err {
 	case nil:
-		return c.JSON(http.StatusCreated, ProjectCreateResponse{ID: newProject.ID})
+		return c.JSON(http.StatusCreated, ProjectCreateResponse{ID: id})
 	case models.ErrUserNotFound:
 		return c.JSON(http.StatusBadRequest, err)
 	default:
@@ -349,77 +248,43 @@ func (h *ProjectHandler) UpdateProject(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, errorResponse("wrong ID"))
 	}
-	projectID, _ := strconv.Atoi(c.Param("id"))
-	project, ok := h.ProjectModel.Get(projectID)
-	if !ok {
-		return c.JSON(http.StatusNotFound, errorResponse("project not found"))
-	}
-	if project.Published || project.OwnerID != userID {
-		return c.JSON(http.StatusForbidden, errorResponse("modification is not allowed"))
-	}
-	strategy, err := app.GetStrategy(&project.ProjectType, h.ProjectModel)
+	releaseDate, err := parseDate(upRequest.ReleaseDate)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, errorResponse("strategy not found"))
+		return c.JSON(http.StatusBadRequest, errorResponse("wrong release date"))
+	}
+	eventTime, err := parseDateTime(upRequest.EventDate)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, errorResponse("wrong event date"))
 	}
 
-	if upRequest.DropEventDate {
-		err = h.ProjectModel.DropEventDate(project)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, errorResponse("unable to drop event date"))
-		}
-	} else {
-		releaseDate, err := parseDate(upRequest.ReleaseDate)
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, errorResponse("wrong release date"))
-		}
-		eventTime, err := parseDateTime(upRequest.EventDate)
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, errorResponse("wrong event date"))
-		}
-
-		project.Title = upRequest.Title
-		project.SubTitle = upRequest.SubTitle
-		project.Instructions = upRequest.Instructions
-		project.Description = upRequest.Description
-		project.ImageLink = upRequest.ImageLink
-		project.CategoryID = upRequest.Category
-		project.ProjectTypeID = upRequest.ProjectType
-		project.GoalAmount = upRequest.GoalAmount
-		project.GoalPeople = upRequest.GoalPeople
-		project.ReleaseDate = releaseDate
-		project.EventDate = eventTime
-		project.Published = upRequest.Published
-
-		err = h.ProjectModel.Update(project)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, errorResponse("unable to update project"))
-		}
+	projectID, _ := strconv.Atoi(c.Param("id"))
+	project, err := h.app.UpdateProject(
+		projectID,
+		userID, 
+		upRequest.GoalPeople, 
+		upRequest.GoalAmount, 
+		upRequest.Category, 
+		upRequest.ProjectType,
+		upRequest.Title,
+		upRequest.SubTitle,
+		upRequest.Description,
+		upRequest.ImageLink,
+		upRequest.Instructions,
+		releaseDate,
+		eventTime,
+		upRequest.Published,
+		upRequest.DropEventDate,
+	)
+	switch err {
+	case app.ErrProjectNotFound:
+		return c.JSON(http.StatusNotFound, errorResponse("project not found"))
+	case app.ErrProjectModifyNotAllowed:
+		return c.JSON(http.StatusForbidden, errorResponse("modification is not allowed"))
+	case nil:
+		return c.JSON(http.StatusOK, project)
+	default:
+		return c.JSON(http.StatusInternalServerError, errorResponse("unable to update project"))
 	}
-	projectResponse := ProjectDetailView{
-		ID:           project.ID,
-		Title:        project.Title,
-		SubTitle:     project.SubTitle,
-		Status:       project.Status(),
-		ReleaseDate:  project.ReleaseDate.Format(dateLayout),
-		ImageLink:    project.ImageLink,
-		Total:        project.Total,
-		Percent:      strategy.Percent(project),
-		Category:     project.Category,
-		ProjectType:  project.ProjectType,
-		GoalPeople:   project.GoalPeople,
-		GoalAmount:   project.GoalAmount,
-		Description:  project.Description,
-		Instructions: project.Instructions,
-		Owner:        project.Owner,
-	}
-	if project.EventDate.IsZero() {
-		projectResponse.EventDate = nil
-	} else {
-		ed := project.EventDate.Format(dateTimeLayout)
-		projectResponse.EventDate = &ed
-	}
-
-	return c.JSON(http.StatusOK, projectResponse)
 }
 
 // DeleteProject delete project
@@ -437,18 +302,16 @@ func (h *ProjectHandler) DeleteProject(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, errorResponse("wrong ID"))
 	}
 	projectID, _ := strconv.Atoi(c.Param("id"))
-	project, ok := h.ProjectModel.Get(projectID)
-	if !ok {
-		return c.JSON(http.StatusNotFound, errorResponse("project not found"))
-	}
-	if project.Published || project.OwnerID != userID {
-		return c.JSON(http.StatusForbidden, errorResponse("project modify not allowed"))
-	}
 
-	err = h.ProjectModel.Delete(project)
-	if err != nil {
+	err = h.app.DeleteProject(userID, projectID)
+	switch err {
+	case app.ErrProjectNotFound:
+		return c.JSON(http.StatusNotFound, errorResponse("project not found"))
+	case app.ErrProjectModifyNotAllowed:
+		return c.JSON(http.StatusForbidden, errorResponse("project modify not allowed"))
+	case nil:
+		return c.JSON(http.StatusNoContent, nil)
+	default:
 		return c.JSON(http.StatusInternalServerError, errorResponse(err.Error()))
 	}
-
-	return c.JSON(http.StatusNoContent, nil)
 }
