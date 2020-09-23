@@ -21,6 +21,11 @@ type Application interface {
 	CreateProject(user, goalPeople, goalAmount, category, projectType int, title, subtitle, descr, imageLink, instructions string, releaseDate, eventTime time.Time) (int, error)
 	UpdateProject(id, user, goalPeople, goalAmount, category, projectType int, title, subtitle, descr, imageLink, instructions string, releaseDate, eventTime time.Time, published, dropEventDate bool) (*ExtendedProject, error)
 	DeleteProject(iserID, projectID int) error
+	GetUserDonations(id int) ([]models.Donation, error)
+	GetProjectDonations(id int) ([]ShortDonation, error)
+	CreateDonation(userID, projectID, payment int) (*models.Donation, error)
+	DeleteDonation(donationID, userID int) error
+	UpdateDonation(donationID, userID, payment int, paid bool) (*models.Donation, error)
 }
 
 // App launchpad instance.
@@ -29,9 +34,11 @@ type App struct {
 	userModel        models.UserImpl
 	projectModel     models.ProjectImpl
 	projectTypeModel models.ProjectTypeImpl
+	donationModel    models.DonationImpl
 	jwtSecret        string
 	provider         auth.Provider
 	clock            clockwork.Clock
+	reCalcCh         chan<- int
 }
 
 // New returns new app.
@@ -44,15 +51,18 @@ func New(
 	provider auth.Provider,
 	clock clockwork.Clock,
 	jwtSecret string,
+	ch chan<- int,
 ) *App {
 	return &App{
 		categoryModel:    category,
 		userModel:        user,
 		projectModel:     project,
 		projectTypeModel: projectType,
+		donationModel:    donation,
 		jwtSecret:        jwtSecret,
 		clock:            clock,
 		provider:         provider,
+		reCalcCh:         ch,
 	}
 }
 
@@ -279,4 +289,97 @@ func (a *App) DeleteProject(userID, projectID int) error {
 	}
 
 	return a.projectModel.Delete(project)
+}
+
+// GetUserDonations returns donations for user.
+func (a *App) GetUserDonations(id int) ([]models.Donation, error) {
+	return a.donationModel.GetAllByUser(id)
+}
+
+// GetProjectDonations returns donations for project.
+func (a *App) GetProjectDonations(id int) ([]ShortDonation, error) {
+	donations, err := a.donationModel.GetAllByProject(id)
+	if err != nil {
+		return nil, err
+	}
+	projectDonations := make([]ShortDonation, 0, len(donations))
+
+	for _, donation := range donations {
+		projectDonations = append(projectDonations, ShortDonation{
+			ID:     donation.ID,
+			User:   donation.User,
+			Locked: donation.Locked,
+			Paid:   donation.Paid,
+		})
+	}
+
+	return projectDonations, nil
+}
+
+// CreateDonation creates new donation.
+func (a *App) CreateDonation(userID, projectID, payment int) (*models.Donation, error) {
+	donation := &models.Donation{
+		UserID:    userID,
+		ProjectID: projectID,
+		Payment:   payment,
+	}
+	err := a.donationModel.Create(donation)
+	if err != nil {
+		return nil, err
+	}
+	a.reCalcCh <- donation.ProjectID
+
+	return donation, nil
+}
+
+// DeleteDonation deletes donation by id.
+func (a *App) DeleteDonation(donationID, userID int) error {
+	donation, ok := a.donationModel.Get(donationID)
+	if !ok {
+		return ErrDonationNotFound
+	}
+	if donation.Locked || donation.UserID != userID {
+		return ErrDonationModifyNotAllowed
+	}
+
+	err := a.donationModel.Delete(donation)
+	if err != nil {
+		return err
+	}
+	a.reCalcCh <- donation.ProjectID
+
+	return nil
+}
+
+// UpdateDonation updates donation by id.
+func (a *App) UpdateDonation(donationID, userID, payment int, paid bool) (*models.Donation, error) {
+	donation, ok := a.donationModel.Get(donationID)
+	if !ok {
+		return nil, ErrDonationNotFound
+	}
+	if donation.Locked {
+		if payment != 0 {
+			return nil, ErrDonationModifyWrong
+		}
+		if donation.Project.OwnerID != userID {
+			return nil, ErrDonationModifyNotAllowed
+		}
+		donation.Paid = paid
+	} else {
+		if payment == 0 {
+			return nil, ErrDonationModifyWrong
+		}
+		if donation.UserID != userID {
+			return nil, ErrDonationModifyNotAllowed
+		}
+		donation.Payment = payment
+	}
+
+	err := a.donationModel.Update(donation)
+	if err != nil {
+		return nil, err
+	}
+	a.reCalcCh <- donation.ProjectID
+
+	return donation, nil
 }

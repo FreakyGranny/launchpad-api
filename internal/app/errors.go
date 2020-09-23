@@ -26,6 +26,16 @@ var (
 )
 
 var (
+	// ErrDonationNotFound donation with given id not found.
+	ErrDonationNotFound = errors.New("donation not found")
+	// ErrDonationModifyNotAllowed donation locked.
+	ErrDonationModifyNotAllowed = errors.New("modifying forbidden")
+	// ErrDonationModifyWrong modifying params are wrong.
+	ErrDonationModifyWrong = errors.New("wrong modifying params")
+
+)
+
+var (
 	// ErrNoStrategy no mathed strategy for project type.
 	ErrNoStrategy = errors.New("no matched strategy")
 )

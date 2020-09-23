@@ -49,7 +49,7 @@ func (s *UserSuite) TestGetUserByID() {
 	c.SetParamNames("id")
 	c.SetParamValues("1")
 
-	app := app.New(nil, s.mockUser , nil, nil, nil, nil, nil, "")
+	app := app.New(nil, s.mockUser , nil, nil, nil, nil, nil, "", nil)
 	h := NewUserHandler(app)
 
 	user := &models.User{
@@ -91,7 +91,7 @@ func (s *UserSuite) TestGetUserNotFound() {
 	c.SetParamNames("id")
 	c.SetParamValues("1")
 
-	app := app.New(nil, s.mockUser , nil, nil, nil, nil, nil, "")
+	app := app.New(nil, s.mockUser , nil, nil, nil, nil, nil, "", nil)
 	h := NewUserHandler(app)
 
 	s.mockUser.EXPECT().Get(1).Return(&models.User{}, false)
@@ -122,7 +122,7 @@ func (s *UserSuite) TestGetCurrentUser() {
 	claims["id"] = float64(user.ID)
 
 	c.Set("user", token)
-	app := app.New(nil, s.mockUser , nil, nil, nil, nil, nil, "")
+	app := app.New(nil, s.mockUser , nil, nil, nil, nil, nil, "", nil)
 	h := NewUserHandler(app)
 
 	s.mockUser.EXPECT().Get(1).Return(user, true)

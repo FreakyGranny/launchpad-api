@@ -27,3 +27,12 @@ type ExtendedProject struct {
 	Instructions string             `json:"instructions"`
 	Owner        models.User        `json:"owner"`
 }
+
+
+// ShortDonation project donation without payment
+type ShortDonation struct {
+	ID     int         `json:"id"`
+	User   models.User `json:"user"`
+	Locked bool        `json:"locked"`
+	Paid   bool        `json:"paid"`
+}

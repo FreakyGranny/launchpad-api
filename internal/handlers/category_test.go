@@ -46,7 +46,7 @@ func (s *CategorySuite) TestGetAllCategories() {
 	c := e.NewContext(req, rec)
 	c.SetPath("/category")
 
-	app := app.New(s.mockCategory, nil, nil, nil, nil, nil, nil, "")
+	app := app.New(s.mockCategory, nil, nil, nil, nil, nil, nil, "", nil)
 	h := NewCategoryHandler(app)
 
 	categories := []models.Category{
@@ -80,7 +80,7 @@ func (s *CategorySuite) TestNoCategories() {
 	c := e.NewContext(req, rec)
 	c.SetPath("/category")
 
-	app := app.New(s.mockCategory, nil, nil, nil, nil, nil, nil, "")
+	app := app.New(s.mockCategory, nil, nil, nil, nil, nil, nil, "", nil)
 	h := NewCategoryHandler(app)
 	s.mockCategory.EXPECT().GetAll().Return([]models.Category{}, nil)
 

@@ -13,6 +13,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/FreakyGranny/launchpad-api/internal/app"
 	"github.com/FreakyGranny/launchpad-api/internal/mocks"
 	"github.com/FreakyGranny/launchpad-api/internal/models"
 )
@@ -51,7 +52,8 @@ func (s *DonationSuite) TestGetProjectDonations() {
 	c.SetParamNames("id")
 	c.SetParamValues("1")
 
-	h := NewDonationHandler(s.mockDonation, recalcChan)
+	app := app.New(nil, nil, nil, nil, s.mockDonation, nil, nil, "", recalcChan)
+	h := NewDonationHandler(app)
 
 	donations := []models.Donation{
 		{
@@ -100,7 +102,8 @@ func (s *DonationSuite) TestGetUserDonations() {
 
 	c.Set("user", token)
 
-	h := NewDonationHandler(s.mockDonation, recalcChan)
+	app := app.New(nil, nil, nil, nil, s.mockDonation, nil, nil, "", recalcChan)
+	h := NewDonationHandler(app)
 
 	donations := []models.Donation{
 		{
@@ -150,7 +153,9 @@ func (s *DonationSuite) TestCreateDonation() {
 	claims["id"] = float64(111)
 	c.Set("user", token)
 
-	h := NewDonationHandler(s.mockDonation, recalcChan)
+	app := app.New(nil, nil, nil, nil, s.mockDonation, nil, nil, "", recalcChan)
+	h := NewDonationHandler(app)
+
 	donation := models.Donation{
 		Payment:   reqStruct.Payment,
 		ProjectID: reqStruct.ProjectID,
@@ -192,7 +197,9 @@ func (s *DonationSuite) TestUpdateDonation() {
 	claims["id"] = float64(111)
 	c.Set("user", token)
 
-	h := NewDonationHandler(s.mockDonation, recalcChan)
+	app := app.New(nil, nil, nil, nil, s.mockDonation, nil, nil, "", recalcChan)
+	h := NewDonationHandler(app)
+
 	donation := &models.Donation{
 		ID:        1,
 		Payment:   100,
@@ -238,7 +245,9 @@ func (s *DonationSuite) TestDeleteDonation() {
 	claims["id"] = float64(111)
 	c.Set("user", token)
 
-	h := NewDonationHandler(s.mockDonation, recalcChan)
+	app := app.New(nil, nil, nil, nil, s.mockDonation, nil, nil, "", recalcChan)
+	h := NewDonationHandler(app)
+
 	s.mockDonation.EXPECT().Get(1).Return(expect, true)
 	s.mockDonation.EXPECT().Delete(expect).Return(nil)
 	s.Require().NoError(h.DeleteDonation(c))

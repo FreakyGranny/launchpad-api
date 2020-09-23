@@ -46,7 +46,7 @@ func (s *ProjectTypeSuite) TestGetAllProjectTypes() {
 	c := e.NewContext(req, rec)
 	c.SetPath("/project_type")
 
-	app := app.New(nil, nil , nil, s.mockProjectType, nil, nil, nil, "")
+	app := app.New(nil, nil , nil, s.mockProjectType, nil, nil, nil, "", nil)
 	h := NewProjectTypeHandler(app)
 
 	projectTypes := []models.ProjectType{

@@ -12,33 +12,33 @@ import (
 
 // Background process
 type Background struct {
-	SystemModel  models.SystemImpl
-	ProjectModel models.ProjectImpl
-	UserModel    models.UserImpl
-	RecalcChan   chan int
-	UpdateChan   chan int
-	SearchChan   chan *models.Project
-	HarverstChan chan *models.Project
+	systemModel  models.SystemImpl
+	projectModel models.ProjectImpl
+	userModel    models.UserImpl
+	recalcChan   chan int
+	updateChan   chan int
+	searchChan   chan *models.Project
+	harverstChan chan *models.Project
 	wg           *sync.WaitGroup
 }
 
 // NewBackground return new background instance
 func NewBackground(ms models.SystemImpl, mp models.ProjectImpl, mu models.UserImpl) *Background {
 	return &Background{
-		SystemModel:  ms,
-		ProjectModel: mp,
-		UserModel:    mu,
-		RecalcChan:   make(chan int, 100),
-		UpdateChan:   make(chan int, 100),
-		SearchChan:   make(chan *models.Project, 10),
-		HarverstChan: make(chan *models.Project, 10),
+		systemModel:  ms,
+		projectModel: mp,
+		userModel:    mu,
+		recalcChan:   make(chan int, 100),
+		updateChan:   make(chan int, 100),
+		searchChan:   make(chan *models.Project, 10),
+		harverstChan: make(chan *models.Project, 10),
 		wg:           &sync.WaitGroup{},
 	}
 }
 
 // GetRecalcPipe returns recalc pipe
 func (b *Background) GetRecalcPipe() chan int {
-	return b.RecalcChan
+	return b.recalcChan
 }
 
 // Start starts background pipeline.
@@ -60,13 +60,13 @@ func (b *Background) Wait() {
 // PeriodicCheck returns recalc pipe
 func (b *Background) PeriodicCheck(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
-	defer close(b.RecalcChan)
+	defer close(b.recalcChan)
 	ticker := time.NewTicker(time.Second * 1)
 	defer ticker.Stop()
 	for {
 		select {
 		case t := <-ticker.C:
-			system, err := b.SystemModel.Get()
+			system, err := b.systemModel.Get()
 			if err != nil {
 				log.Error("unable to get system settings")
 			}
@@ -75,18 +75,18 @@ func (b *Background) PeriodicCheck(ctx context.Context, wg *sync.WaitGroup) {
 				continue
 			}
 			log.Info("checking active projects")
-			err = b.SystemModel.Update(system)
+			err = b.systemModel.Update(system)
 			if err != nil {
 				log.Error(err)
 				continue
 			}
-			projects, err := b.ProjectModel.GetActiveProjects()
+			projects, err := b.projectModel.GetActiveProjects()
 			if err != nil {
 				log.Error(err)
 				continue
 			}
 			for _, project := range *projects {
-				b.RecalcChan <- project.ID
+				b.recalcChan <- project.ID
 			}
 		case <-ctx.Done():
 			log.Info("stop periodic check")
@@ -98,26 +98,26 @@ func (b *Background) PeriodicCheck(ctx context.Context, wg *sync.WaitGroup) {
 // RecalcProject update total for project
 func (b *Background) RecalcProject(wg *sync.WaitGroup) {
 	defer wg.Done()
-	defer close(b.SearchChan)
+	defer close(b.searchChan)
 	var project *models.Project
 	var ok bool
 
 	for {
-		projectID, open := <-b.RecalcChan
+		projectID, open := <-b.recalcChan
 		if projectID == 0 && !open {
 			log.Info("stop recalc")
 			return
 		}
-		project, ok = b.ProjectModel.Get(projectID)
+		project, ok = b.projectModel.Get(projectID)
 		if !ok {
 			log.Errorf("project %d not found", projectID)
 			continue
 		}
 		if project.Locked {
-			b.SearchChan <- project
+			b.searchChan <- project
 			continue
 		}
-		strategy, err := GetStrategy(&project.ProjectType, b.ProjectModel)
+		strategy, err := GetStrategy(&project.ProjectType, b.projectModel)
 		if err != nil {
 			log.Errorf("unable to get stategy for project %d", projectID)
 			continue
@@ -128,25 +128,25 @@ func (b *Background) RecalcProject(wg *sync.WaitGroup) {
 			log.Errorf("unable to recalc project %d", projectID)
 			continue
 		}
-		b.SearchChan <- project
+		b.searchChan <- project
 	}
 }
 
 // CheckSearch check project for search stage
 func (b *Background) CheckSearch(wg *sync.WaitGroup) {
 	defer wg.Done()
-	defer close(b.HarverstChan)
+	defer close(b.harverstChan)
 	for {
-		project, open := <-b.SearchChan
+		project, open := <-b.searchChan
 		if project == nil && !open {
 			log.Info("stop checking search")
 			return
 		}
 		if project.Locked {
-			b.HarverstChan <- project
+			b.harverstChan <- project
 			continue
 		}
-		strategy, err := GetStrategy(&project.ProjectType, b.ProjectModel)
+		strategy, err := GetStrategy(&project.ProjectType, b.projectModel)
 		if err != nil {
 			log.Errorf("unable to get stategy for project %d", project.ID)
 			continue
@@ -156,21 +156,21 @@ func (b *Background) CheckSearch(wg *sync.WaitGroup) {
 			log.Errorf("unable to check search for project %d", project.ID)
 			continue
 		}
-		b.HarverstChan <- project
+		b.harverstChan <- project
 	}
 }
 
 // HarvestCheck check project for harvest stage
 func (b *Background) HarvestCheck(wg *sync.WaitGroup) {
 	defer wg.Done()
-	defer close(b.UpdateChan)
+	defer close(b.updateChan)
 	for {
-		project, open := <-b.HarverstChan
+		project, open := <-b.harverstChan
 		if project == nil && !open {
 			log.Info("stop checking harvest")
 			return
 		}
-		strategy, err := GetStrategy(&project.ProjectType, b.ProjectModel)
+		strategy, err := GetStrategy(&project.ProjectType, b.projectModel)
 		if err != nil {
 			log.Errorf("unable to get stategy for project %d", project.ID)
 			continue
@@ -181,7 +181,7 @@ func (b *Background) HarvestCheck(wg *sync.WaitGroup) {
 				log.Errorf("unable to check outdate for project %d", project.ID)
 			}
 			if closed {
-				b.UpdateChan <- project.OwnerID
+				b.updateChan <- project.OwnerID
 			}
 
 			continue
@@ -192,7 +192,7 @@ func (b *Background) HarvestCheck(wg *sync.WaitGroup) {
 			continue
 		}
 		if evolved {
-			b.UpdateChan <- project.OwnerID
+			b.updateChan <- project.OwnerID
 		}
 	}
 }
@@ -206,23 +206,23 @@ func (b *Background) UpdateUser(wg *sync.WaitGroup) {
 	var err error
 
 	for {
-		userID, open := <-b.UpdateChan
+		userID, open := <-b.updateChan
 		if userID == 0 && !open {
 			log.Info("stop update users")
 			return
 		}
-		user, ok = b.UserModel.Get(userID)
+		user, ok = b.userModel.Get(userID)
 		if !ok {
 			log.Errorf("user %d not found", userID)
 			continue
 		}
-		pGroups, err = b.UserModel.GetProjectsForRate(userID)
+		pGroups, err = b.userModel.GetProjectsForRate(userID)
 		if err != nil {
 			log.Error("error while fetching project groups")
 		}
 		user.ProjectCount, user.SuccessRate = getStats(pGroups)
 
-		_, err = b.UserModel.Update(user)
+		_, err = b.userModel.Update(user)
 		if err != nil {
 			log.Error("Error while trying update user")
 		}

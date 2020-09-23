@@ -64,7 +64,7 @@ func (s *LoginSuite) TestWithCreateUser() {
 	c := e.NewContext(req, rec)
 	c.SetPath("/login")
 
-	app := app.New(nil, s.mockUser, nil, nil, nil, s.mockProvider, clockwork.NewFakeClock(), "secret")
+	app := app.New(nil, s.mockUser, nil, nil, nil, s.mockProvider, clockwork.NewFakeClock(), "secret", nil)
 	h := NewAuthHandler(app)
 
 	a := &auth.AccessData{
@@ -113,7 +113,7 @@ func (s *LoginSuite) TestWithUpdateUser() {
 	c := e.NewContext(req, rec)
 	c.SetPath("/login")
 
-	app := app.New(nil, s.mockUser, nil, nil, nil, s.mockProvider, clockwork.NewFakeClock(), "secret")
+	app := app.New(nil, s.mockUser, nil, nil, nil, s.mockProvider, clockwork.NewFakeClock(), "secret", nil)
 	h := NewAuthHandler(app)
 
 	a := &auth.AccessData{

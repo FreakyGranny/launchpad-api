@@ -57,7 +57,7 @@ func API(cmd *cobra.Command, args []string) {
 	b := app.NewBackground(sModel, pModel, uModel)
 	b.Start(ctx)
 	e := server.New(
-		app.New(cModel, uModel, pModel, ptModel, dModel, auth.NewVk(cfg.Vk), clockwork.NewRealClock(), cfg.JWTSecret),
+		app.New(cModel, uModel, pModel, ptModel, dModel, auth.NewVk(cfg.Vk), clockwork.NewRealClock(), cfg.JWTSecret, b.GetRecalcPipe()),
 		[]byte(cfg.JWTSecret),
 	)
 	go func() {

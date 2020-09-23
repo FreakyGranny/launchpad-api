@@ -94,7 +94,7 @@ func (s *ProjectSuite) TestGetSingleProject() {
 	c.SetParamNames("id")
 	c.SetParamValues("1")
 
-	app := app.New(nil, nil , s.mockProject, nil, nil, nil, nil, "")
+	app := app.New(nil, nil , s.mockProject, nil, nil, nil, nil, "", nil)
 	h := NewProjectHandler(app)
 
 	project := &models.Project{
@@ -162,7 +162,7 @@ func (s *ProjectSuite) TestCreateProject() {
 	claims["id"] = float64(113)
 	c.Set("user", token)
 
-	app := app.New(nil, nil , s.mockProject, nil, nil, nil, nil, "")
+	app := app.New(nil, nil , s.mockProject, nil, nil, nil, nil, "", nil)
 	h := NewProjectHandler(app)
 
 	expect := models.Project{
@@ -208,7 +208,7 @@ func (s *ProjectSuite) TestUpdateProject() {
 	claims["id"] = float64(42)
 	c.Set("user", token)
 
-	app := app.New(nil, nil , s.mockProject, nil, nil, nil, nil, "")
+	app := app.New(nil, nil , s.mockProject, nil, nil, nil, nil, "", nil)
 	h := NewProjectHandler(app)
 
 	expect := &models.Project{
@@ -245,7 +245,7 @@ func (s *ProjectSuite) TestDeleteProject() {
 	claims["id"] = float64(111)
 	c.Set("user", token)
 
-	app := app.New(nil, nil , s.mockProject, nil, nil, nil, nil, "")
+	app := app.New(nil, nil , s.mockProject, nil, nil, nil, nil, "", nil)
 	h := NewProjectHandler(app)
 	expect := &models.Project{
 		ID:      1,
@@ -273,7 +273,7 @@ func (s *ProjectSuite) TestGetProjectsWithPagination() {
 	c.QueryParams().Add("page", strconv.Itoa(page))
 	c.QueryParams().Add("page_size", strconv.Itoa(pageSize))
 
-	app := app.New(nil, nil , s.mockProject, nil, nil, nil, nil, "")
+	app := app.New(nil, nil , s.mockProject, nil, nil, nil, nil, "", nil)
 	h := NewProjectHandler(app)
 
 	s.mockProject.EXPECT().GetProjectsWithPagination(1, 2, page, pageSize, true).Return(s.mockPaginator, nil)
@@ -301,7 +301,7 @@ func (s *ProjectSuite) TestGetUserProjects() {
 	c.QueryParams().Add("owned", "true")
 	c.QueryParams().Add("contributed", "true")
 
-	app := app.New(nil, nil , s.mockProject, nil, nil, nil, nil, "")
+	app := app.New(nil, nil , s.mockProject, nil, nil, nil, nil, "", nil)
 	h := NewProjectHandler(app)
 	s.mockProject.EXPECT().GetUserProjects(1, true, true).Return(s.makeProjectList(), nil)
 
