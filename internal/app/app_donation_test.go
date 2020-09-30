@@ -100,7 +100,7 @@ func (s *DonationSuite) TestCreateDonation() {
 	}
 }
 
-func (s *DonationSuite) TestUpdateDonation() {
+func (s *DonationSuite) TestSetPayment() {
 	donation := &models.Donation{
 		ID:        1,
 		Payment:   100,
@@ -123,6 +123,101 @@ func (s *DonationSuite) TestUpdateDonation() {
 	default:
 		s.T().Fail()
 	}
+}
+
+func (s *DonationSuite) TestSetPaymentWrongUser() {
+	donation := &models.Donation{
+		ID:        1,
+		Payment:   100,
+		UserID:    111,
+		Paid:      false,
+		Locked:    false,
+		ProjectID: 33,
+	}
+	s.mockDonation.EXPECT().Get(1).Return(donation, true)
+
+	newDon, err := s.app.UpdateDonation(1, 888, 1000, false)
+	s.Require().Error(err)
+	s.Require().Nil(newDon)
+	s.Require().Equal(ErrDonationModifyNotAllowed, err)
+}
+
+func (s *DonationSuite) TestSetPaymentLocked() {
+	donation := &models.Donation{
+		ID:        1,
+		Payment:   100,
+		UserID:    111,
+		Paid:      false,
+		Locked:    true,
+		ProjectID: 33,
+	}
+	s.mockDonation.EXPECT().Get(1).Return(donation, true)
+
+	newDon, err := s.app.UpdateDonation(1, 111, 1000, false)
+	s.Require().Error(err)
+	s.Require().Nil(newDon)
+	s.Require().Equal(ErrDonationModifyWrong, err)
+}
+
+func (s *DonationSuite) TestCheckPaid() {
+	donation := &models.Donation{
+		ID:        1,
+		Payment:   100,
+		UserID:    111,
+		Paid:      false,
+		Locked:    true,
+		ProjectID: 33,
+		Project: models.Project{
+			OwnerID: 1212,
+		},
+	}
+	s.mockDonation.EXPECT().Get(1).Return(donation, true)
+	donation.Paid = true
+	s.mockDonation.EXPECT().Update(donation).Return(nil)
+
+	newDon, err := s.app.UpdateDonation(1, 1212, 0, true)
+	s.Require().NoError(err)
+	s.Require().Equal(donation, newDon)
+}
+
+func (s *DonationSuite) TestCheckPaidNotOwner() {
+	donation := &models.Donation{
+		ID:        1,
+		Payment:   100,
+		UserID:    111,
+		Paid:      false,
+		Locked:    true,
+		ProjectID: 33,
+		Project: models.Project{
+			OwnerID: 1212,
+		},
+	}
+	s.mockDonation.EXPECT().Get(1).Return(donation, true)
+
+	newDon, err := s.app.UpdateDonation(1, 888, 0, true)
+	s.Require().Error(err)
+	s.Require().Nil(newDon)
+	s.Require().Equal(ErrDonationModifyNotAllowed, err)
+}
+
+func (s *DonationSuite) TestCheckPaidNotLocked() {
+	donation := &models.Donation{
+		ID:        1,
+		Payment:   100,
+		UserID:    111,
+		Paid:      false,
+		Locked:    false,
+		ProjectID: 33,
+		Project: models.Project{
+			OwnerID: 1212,
+		},
+	}
+	s.mockDonation.EXPECT().Get(1).Return(donation, true)
+
+	newDon, err := s.app.UpdateDonation(1, 1212, 0, true)
+	s.Require().Error(err)
+	s.Require().Nil(newDon)
+	s.Require().Equal(ErrDonationModifyWrong, err)
 }
 
 func (s *DonationSuite) TestDeleteDonation() {

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -73,6 +74,23 @@ func (s *ProjectTypeSuite) TestGetAllProjectTypes() {
 
 	var ptJSON = `[{"id":1,"alias":"other","name":"Other","options":[],"goal_by_people":true,"goal_by_amount":false,"end_by_goal_gain":true},{"id":2,"alias":"some","name":"Some","options":[],"goal_by_people":false,"goal_by_amount":true,"end_by_goal_gain":true}]`
 	s.Require().Equal(ptJSON, strings.Trim(rec.Body.String(), "\n"))
+}
+
+func (s *ProjectTypeSuite) TestError() {
+	req := s.buildRequest()
+
+	e := echo.New()
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/project_type")
+
+	h := NewProjectTypeHandler(s.mockApp)
+
+	s.mockApp.EXPECT().GetProjectTypes().Return(nil, errors.New("some unexpected error"))
+	s.Require().NoError(h.GetProjectTypes(c))
+	s.Require().Equal(http.StatusInternalServerError, rec.Code)
+
+	s.Require().Equal(`{"error":"unable to get project types"}`, strings.Trim(rec.Body.String(), "\n"))
 }
 
 func TestProjectTypeSuite(t *testing.T) {

@@ -145,6 +145,48 @@ func (s *ProjectSuite) TestUpdateProject() {
 	s.Require().Equal("ChangeProject", eProject.Title)
 }
 
+func (s *ProjectSuite) TestUpdateProjectNotFound() {
+	s.mockProject.EXPECT().Get(17).Return(nil, false)
+	eProject, err := s.app.UpdateProject(17, 42, 0, 0, 0, 0, "ChangeProject", "", "", "", "", time.Time{}, time.Time{}, false, false)
+	s.Require().Error(err)
+	s.Require().Equal(ErrProjectNotFound, err)
+	s.Require().Nil(eProject)
+}
+
+func (s *ProjectSuite) TestUpdateProjectPublished() {
+	expect := &models.Project{
+		ID:    17,
+		Title: "before_Title",
+		ProjectType: models.ProjectType{
+			GoalByAmount:  true,
+			EndByGoalGain: true,
+		},
+		Published: true,
+		OwnerID: 42,
+	}
+	s.mockProject.EXPECT().Get(17).Return(expect, true)
+	eProject, err := s.app.UpdateProject(17, 42, 0, 0, 0, 0, "ChangeProject", "", "", "", "", time.Time{}, time.Time{}, false, false)
+	s.Require().Error(err)
+	s.Require().Equal(ErrProjectModifyNotAllowed, err)
+	s.Require().Nil(eProject)
+}
+
+func (s *ProjectSuite) TestDropEventDate() {
+	expect := &models.Project{
+		ID:    17,
+		Title: "before_Title",
+		ProjectType: models.ProjectType{
+			GoalByAmount:  true,
+			EndByGoalGain: true,
+		},
+		OwnerID: 42,
+	}
+	s.mockProject.EXPECT().Get(17).Return(expect, true)
+	s.mockProject.EXPECT().DropEventDate(expect).Return(nil)
+	_, err := s.app.UpdateProject(17, 42, 0, 0, 0, 0, "", "", "", "", "", time.Time{}, time.Time{}, false, true)
+	s.Require().NoError(err)
+}
+
 func (s *ProjectSuite) TestDeleteProject() {
 	expect := &models.Project{
 		ID:      1,
@@ -153,6 +195,36 @@ func (s *ProjectSuite) TestDeleteProject() {
 	s.mockProject.EXPECT().Get(1).Return(expect, true)
 	s.mockProject.EXPECT().Delete(expect).Return(nil)
 	s.Require().NoError(s.app.DeleteProject(111, 1))
+}
+
+func (s *ProjectSuite) TestDeleteProjectNotAllowed() {
+	expect := &models.Project{
+		ID:      1,
+		OwnerID: 111,
+		Published: true,
+	}
+	s.mockProject.EXPECT().Get(1).Return(expect, true)
+	err := s.app.DeleteProject(111, 1)
+	s.Require().Error(err)
+	s.Require().Equal(ErrProjectModifyNotAllowed, err)
+}
+
+func (s *ProjectSuite) TestDeleteProjectWrongUser() {
+	expect := &models.Project{
+		ID:      1,
+		OwnerID: 111,
+	}
+	s.mockProject.EXPECT().Get(1).Return(expect, true)
+	err := s.app.DeleteProject(9873, 1)
+	s.Require().Error(err)
+	s.Require().Equal(ErrProjectModifyNotAllowed, err)
+}
+
+func (s *ProjectSuite) TestDeleteProjectNotFound() {
+	s.mockProject.EXPECT().Get(1).Return(nil, false)
+	err := s.app.DeleteProject(111, 1)
+	s.Require().Error(err)
+	s.Require().Equal(ErrProjectNotFound, err)
 }
 
 func (s *ProjectSuite) TestGetProjectsWithPagination() {

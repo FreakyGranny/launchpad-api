@@ -184,6 +184,54 @@ func (s *ProjectSuite) TestUpdateProject() {
 	s.Require().Equal(pJSON, strings.Trim(rec.Body.String(), "\n"))
 }
 
+func (s *ProjectSuite) TestDropEventDate() {
+	reqStruct := ProjectModifyRequest{
+		DropEventDate: true,
+	}
+	body, err := json.Marshal(reqStruct)
+	if err != nil {
+		s.T().Fail()
+	}
+	req := httptest.NewRequest(echo.PATCH, "/", bytes.NewBuffer(body))
+	req.Header.Set("Content-type", "application/json")
+
+	e := echo.New()
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/project/:id")
+	c.SetParamNames("id")
+	c.SetParamValues("17")
+
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+	claims["id"] = float64(42)
+	c.Set("user", token)
+
+	h := NewProjectHandler(s.mockApp)
+
+	expect := &app.ExtendedProject{
+		ID:          17,
+		Title:       "ChangeProject",
+		Status:      "draft",
+		ReleaseDate: "2020-09-30",
+		ProjectType: models.ProjectType{
+			GoalByAmount:  true,
+			EndByGoalGain: true,
+		},
+		Owner: models.User{
+			ID: 42,
+		},
+	}
+	s.mockApp.EXPECT().UpdateProject(
+		17, 42, 0, 0, 0, 0, "", "", "", "", "", time.Time{}, time.Time{}, false, true,
+	).Return(expect, nil)
+	s.Require().NoError(h.UpdateProject(c))
+	s.Require().Equal(http.StatusOK, rec.Code)
+
+	var pJSON = `{"id":17,"title":"ChangeProject","subtitle":"","status":"draft","release_date":"2020-09-30","event_date":null,"image_link":"","total":0,"percent":0,"category":{"id":0,"alias":"","name":""},"project_type":{"id":0,"alias":"","name":"","options":null,"goal_by_people":false,"goal_by_amount":true,"end_by_goal_gain":true},"goal_people":0,"goal_amount":0,"description":"","instructions":"","owner":{"id":42,"username":"","first_name":"","last_name":"","avatar":"","project_count":0,"success_rate":0}}`
+	s.Require().Equal(pJSON, strings.Trim(rec.Body.String(), "\n"))
+}
+
 func (s *ProjectSuite) TestDeleteProject() {
 	req := httptest.NewRequest(echo.DELETE, "/", bytes.NewBuffer(nil))
 	req.Header.Set("Content-type", "application/json")

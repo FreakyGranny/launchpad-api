@@ -274,9 +274,7 @@ func (a *App) UpdateProject(id, user, goalPeople, goalAmount, category, projectT
 	if err != nil {
 		return nil, err
 	}
-	if err != nil {
-		return nil, err
-	}
+
 	return a.extendProject(project)
 }
 
