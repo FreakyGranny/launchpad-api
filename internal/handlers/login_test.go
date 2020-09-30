@@ -3,41 +3,33 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/jonboulle/clockwork"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/FreakyGranny/launchpad-api/internal/app"
-	"github.com/FreakyGranny/launchpad-api/internal/auth"
-	"github.com/FreakyGranny/launchpad-api/internal/mocks"
-	"github.com/FreakyGranny/launchpad-api/internal/models"
+	mockapp "github.com/FreakyGranny/launchpad-api/internal/app/mock"
 )
 
 type LoginSuite struct {
 	suite.Suite
-	mockUserCtl     *gomock.Controller
-	mockUser        *mocks.MockUserImpl
-	mockProviderCtl *gomock.Controller
-	mockProvider    *mocks.MockProvider
+	mockAppCtl *gomock.Controller
+	mockApp    *mockapp.MockApplication
 }
 
 func (s *LoginSuite) SetupTest() {
-	s.mockUserCtl = gomock.NewController(s.T())
-	s.mockUser = mocks.NewMockUserImpl(s.mockUserCtl)
-
-	s.mockProviderCtl = gomock.NewController(s.T())
-	s.mockProvider = mocks.NewMockProvider(s.mockProviderCtl)
+	s.mockAppCtl = gomock.NewController(s.T())
+	s.mockApp = mockapp.NewMockApplication(s.mockAppCtl)
 }
 
 func (s *LoginSuite) TearDownTest() {
-	s.mockUserCtl.Finish()
-	s.mockProviderCtl.Finish()
+	s.mockAppCtl.Finish()
 }
 
 func (s *LoginSuite) buildRequest(code string) (*http.Request, error) {
@@ -52,108 +44,98 @@ func (s *LoginSuite) buildRequest(code string) (*http.Request, error) {
 	return req, nil
 }
 
-func (s *LoginSuite) TestWithCreateUser() {
+func (s *LoginSuite) TestSuccessLogin() {
 	expectCode := "secret_code"
 	req, err := s.buildRequest(expectCode)
 	if err != nil {
 		s.T().Fail()
 	}
-
 	e := echo.New()
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetPath("/login")
 
-	app := app.New(nil, s.mockUser, nil, nil, nil, s.mockProvider, clockwork.NewFakeClock(), "secret", nil)
-	h := NewAuthHandler(app)
+	s.mockApp.EXPECT().Authentificate(expectCode).Return("MOCKED_TOKEN", nil)
 
-	a := &auth.AccessData{
-		AccessToken: "token",
-		Expires:     123,
-		UserID:      13,
-		Email:       "some",
-	}
-	ud := &auth.UserData{
-		Username:  "1",
-		FirstName: "2",
-		LastName:  "3",
-		Avatar:    "4",
-	}
-	user := &models.User{}
-
-	s.mockProvider.EXPECT().GetAccessToken(expectCode).Return(a, nil)
-	s.mockProvider.EXPECT().GetUserData(a.UserID, a.AccessToken).Return(ud, nil)
-	s.mockUser.EXPECT().Get(a.UserID).Return(user, false)
-	s.mockUser.EXPECT().Create(user).Return(user, nil)
-
+	h := NewAuthHandler(s.mockApp)
 	s.Require().NoError(h.Login(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
 
-	s.Require().Equal(user.Username, ud.Username)
-	s.Require().Equal(user.FirstName, ud.FirstName)
-	s.Require().Equal(user.LastName, ud.LastName)
-	s.Require().Equal(user.Avatar, ud.Avatar)
-	s.Require().Equal(user.ID, a.UserID)
-	s.Require().Equal(user.Email, a.Email)
-
-	var tokenJSON = `{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6ZmFsc2UsImV4cCI6NDQ5ODg0OTIzLCJpZCI6MTN9.QDU7Og620wNdjDNFouk6jRmeBRqzhD9A6FgZa1x1gUs"}`
-
-	s.Require().Equal(tokenJSON, strings.Trim(rec.Body.String(), "\n"))
+	s.Require().Equal(`{"token":"MOCKED_TOKEN"}`, strings.Trim(rec.Body.String(), "\n"))
 }
 
-func (s *LoginSuite) TestWithUpdateUser() {
-	expectCode := "secret_code"
-	req, err := s.buildRequest(expectCode)
-	if err != nil {
-		s.T().Fail()
-	}
+func (s *LoginSuite) TestBadRequest() {
+	req := httptest.NewRequest(echo.POST, "/", bytes.NewBuffer([]byte("this is JSON body?")))
+	req.Header.Set("Content-type", "application/json")
 
 	e := echo.New()
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetPath("/login")
 
-	app := app.New(nil, s.mockUser, nil, nil, nil, s.mockProvider, clockwork.NewFakeClock(), "secret", nil)
-	h := NewAuthHandler(app)
-
-	a := &auth.AccessData{
-		AccessToken: "token",
-		Expires:     123,
-		UserID:      13,
-		Email:       "some",
-	}
-	ud := &auth.UserData{
-		Username:  "1",
-		FirstName: "2",
-		LastName:  "3",
-		Avatar:    "4",
-	}
-	user := &models.User{
-		ID:        13,
-		Username:  "not updated",
-		FirstName: "not updated",
-		LastName:  "not updated",
-		Avatar:    "not updated",
-		Email:     "not updated",
-	}
-
-	s.mockProvider.EXPECT().GetAccessToken(expectCode).Return(a, nil)
-	s.mockProvider.EXPECT().GetUserData(a.UserID, a.AccessToken).Return(ud, nil)
-	s.mockUser.EXPECT().Get(a.UserID).Return(user, true)
-	s.mockUser.EXPECT().Update(user).Return(user, nil)
-
+	h := NewAuthHandler(s.mockApp)
 	s.Require().NoError(h.Login(c))
-	s.Require().Equal(http.StatusOK, rec.Code)
+	s.Require().Equal(http.StatusBadRequest, rec.Code)
+}
 
-	s.Require().Equal(user.Username, ud.Username)
-	s.Require().Equal(user.FirstName, ud.FirstName)
-	s.Require().Equal(user.LastName, ud.LastName)
-	s.Require().Equal(user.Avatar, ud.Avatar)
-	s.Require().Equal(user.ID, a.UserID)
-	s.Require().Equal(user.Email, a.Email)
+func (s *LoginSuite) TestGetTokenFail() {
+	expectCode := "secret_code"
+	req, err := s.buildRequest(expectCode)
+	if err != nil {
+		s.T().Fail()
+	}
+	e := echo.New()
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/login")
 
-	var tokenJSON = `{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6ZmFsc2UsImV4cCI6NDQ5ODg0OTIzLCJpZCI6MTN9.QDU7Og620wNdjDNFouk6jRmeBRqzhD9A6FgZa1x1gUs"}`
-	s.Require().Equal(tokenJSON, strings.Trim(rec.Body.String(), "\n"))
+	s.mockApp.EXPECT().Authentificate(expectCode).Return("", app.ErrGetAccessTokenFailed)
+
+	h := NewAuthHandler(s.mockApp)
+	s.Require().NoError(h.Login(c))
+	s.Require().Equal(http.StatusUnauthorized, rec.Code)
+
+	s.Require().Equal(`{"error":"unable to authentificate"}`, strings.Trim(rec.Body.String(), "\n"))
+}
+
+func (s *LoginSuite) TestGetUserDataFail() {
+	expectCode := "secret_code"
+	req, err := s.buildRequest(expectCode)
+	if err != nil {
+		s.T().Fail()
+	}
+	e := echo.New()
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/login")
+
+	s.mockApp.EXPECT().Authentificate(expectCode).Return("", app.ErrGetUserDataFailed)
+
+	h := NewAuthHandler(s.mockApp)
+	s.Require().NoError(h.Login(c))
+	s.Require().Equal(http.StatusUnauthorized, rec.Code)
+
+	s.Require().Equal(`{"error":"unable to authentificate"}`, strings.Trim(rec.Body.String(), "\n"))
+}
+
+func (s *LoginSuite) TestLoginWithUnexpectedError() {
+	expectCode := "secret_code"
+	req, err := s.buildRequest(expectCode)
+	if err != nil {
+		s.T().Fail()
+	}
+	e := echo.New()
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/login")
+
+	s.mockApp.EXPECT().Authentificate(expectCode).Return("", errors.New("terrible error"))
+
+	h := NewAuthHandler(s.mockApp)
+	s.Require().NoError(h.Login(c))
+	s.Require().Equal(http.StatusInternalServerError, rec.Code)
+
+	s.Require().Equal(`{"error":"unexpected error"}`, strings.Trim(rec.Body.String(), "\n"))
 }
 
 func TestLoginSuite(t *testing.T) {

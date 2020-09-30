@@ -9,6 +9,8 @@ import (
 	"github.com/jonboulle/clockwork"
 )
 
+//go:generate mockgen -source=$GOFILE -destination=mock/app_mock.go -package=app_mock Application
+
 // Application business logic.
 type Application interface {
 	GetCategories() ([]models.Category, error)

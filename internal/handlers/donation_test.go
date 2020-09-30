@@ -14,23 +14,23 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/FreakyGranny/launchpad-api/internal/app"
-	"github.com/FreakyGranny/launchpad-api/internal/mocks"
+	mockapp "github.com/FreakyGranny/launchpad-api/internal/app/mock"
 	"github.com/FreakyGranny/launchpad-api/internal/models"
 )
 
 type DonationSuite struct {
 	suite.Suite
-	mockDonationCtl *gomock.Controller
-	mockDonation    *mocks.MockDonationImpl
+	mockAppCtl *gomock.Controller
+	mockApp    *mockapp.MockApplication
 }
 
 func (s *DonationSuite) SetupTest() {
-	s.mockDonationCtl = gomock.NewController(s.T())
-	s.mockDonation = mocks.NewMockDonationImpl(s.mockDonationCtl)
+	s.mockAppCtl = gomock.NewController(s.T())
+	s.mockApp = mockapp.NewMockApplication(s.mockAppCtl)
 }
 
 func (s *DonationSuite) TearDownTest() {
-	s.mockDonationCtl.Finish()
+	s.mockAppCtl.Finish()
 }
 
 func (s *DonationSuite) buildRequest() *http.Request {
@@ -41,24 +41,18 @@ func (s *DonationSuite) buildRequest() *http.Request {
 }
 
 func (s *DonationSuite) TestGetProjectDonations() {
-	req := s.buildRequest()
-	recalcChan := make(chan int, 1)
-	defer close(recalcChan)
-
 	e := echo.New()
 	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+	c := e.NewContext(s.buildRequest(), rec)
 	c.SetPath("/donation/project/:id")
 	c.SetParamNames("id")
 	c.SetParamValues("1")
 
-	app := app.New(nil, nil, nil, nil, s.mockDonation, nil, nil, "", recalcChan)
-	h := NewDonationHandler(app)
+	h := NewDonationHandler(s.mockApp)
 
-	donations := []models.Donation{
+	donations := []app.ShortDonation{
 		{
 			ID:      1,
-			Payment: 100,
 			Paid:    true,
 			User: models.User{
 				ID:        1,
@@ -68,7 +62,6 @@ func (s *DonationSuite) TestGetProjectDonations() {
 		},
 		{
 			ID:      2,
-			Payment: 200,
 			Paid:    true,
 			User: models.User{
 				ID:        2,
@@ -77,7 +70,7 @@ func (s *DonationSuite) TestGetProjectDonations() {
 			},
 		},
 	}
-	s.mockDonation.EXPECT().GetAllByProject(1).Return(donations, nil)
+	s.mockApp.EXPECT().GetProjectDonations(1).Return(donations, nil)
 	s.Require().NoError(h.GetProjectDonations(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
 
@@ -87,24 +80,17 @@ func (s *DonationSuite) TestGetProjectDonations() {
 }
 
 func (s *DonationSuite) TestGetUserDonations() {
-	req := s.buildRequest()
-	recalcChan := make(chan int, 1)
-	defer close(recalcChan)
-
 	e := echo.New()
 	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+	c := e.NewContext(s.buildRequest(), rec)
 	c.SetPath("/donation")
 
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["id"] = float64(111)
-
 	c.Set("user", token)
 
-	app := app.New(nil, nil, nil, nil, s.mockDonation, nil, nil, "", recalcChan)
-	h := NewDonationHandler(app)
-
+	h := NewDonationHandler(s.mockApp)
 	donations := []models.Donation{
 		{
 			ID:        1,
@@ -119,7 +105,7 @@ func (s *DonationSuite) TestGetUserDonations() {
 			ProjectID: 20,
 		},
 	}
-	s.mockDonation.EXPECT().GetAllByUser(111).Return(donations, nil)
+	s.mockApp.EXPECT().GetUserDonations(111).Return(donations, nil)
 	s.Require().NoError(h.GetUserDonations(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
 
@@ -139,10 +125,6 @@ func (s *DonationSuite) TestCreateDonation() {
 	}
 	req := httptest.NewRequest(echo.POST, "/", bytes.NewBuffer(body))
 	req.Header.Set("Content-type", "application/json")
-
-	recalcChan := make(chan int, 1)
-	defer close(recalcChan)
-
 	e := echo.New()
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -152,23 +134,20 @@ func (s *DonationSuite) TestCreateDonation() {
 	claims := token.Claims.(jwt.MapClaims)
 	claims["id"] = float64(111)
 	c.Set("user", token)
-
-	app := app.New(nil, nil, nil, nil, s.mockDonation, nil, nil, "", recalcChan)
-	h := NewDonationHandler(app)
-
-	donation := models.Donation{
-		Payment:   reqStruct.Payment,
+	expect := &models.Donation{
+		ID: 111,
 		ProjectID: reqStruct.ProjectID,
-		UserID:    111,
+		Payment: reqStruct.Payment,
 	}
-	s.mockDonation.EXPECT().Create(&donation).Return(nil)
+
+	h := NewDonationHandler(s.mockApp)
+	s.mockApp.EXPECT().CreateDonation(111, reqStruct.ProjectID, reqStruct.Payment).Return(expect, nil)
 	s.Require().NoError(h.CreateDonation(c))
 	s.Require().Equal(http.StatusCreated, rec.Code)
 
-	var pDonationsJSON = `{"id":0,"payment":100,"locked":false,"paid":false,"project":10}`
+	var pDonationsJSON = `{"id":111,"payment":100,"locked":false,"paid":false,"project":10}`
 
 	s.Require().Equal(pDonationsJSON, strings.Trim(rec.Body.String(), "\n"))
-	s.Require().Equal(10, <-recalcChan)
 }
 
 func (s *DonationSuite) TestUpdateDonation() {
@@ -181,10 +160,6 @@ func (s *DonationSuite) TestUpdateDonation() {
 	}
 	req := httptest.NewRequest(echo.PATCH, "/", bytes.NewBuffer(body))
 	req.Header.Set("Content-type", "application/json")
-
-	recalcChan := make(chan int, 1)
-	defer close(recalcChan)
-
 	e := echo.New()
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -197,27 +172,21 @@ func (s *DonationSuite) TestUpdateDonation() {
 	claims["id"] = float64(111)
 	c.Set("user", token)
 
-	app := app.New(nil, nil, nil, nil, s.mockDonation, nil, nil, "", recalcChan)
-	h := NewDonationHandler(app)
-
+	h := NewDonationHandler(s.mockApp)
 	donation := &models.Donation{
 		ID:        1,
-		Payment:   100,
+		Payment:   200,
 		UserID:    111,
 		Paid:      false,
 		Locked:    false,
 		ProjectID: 33,
 	}
-	s.mockDonation.EXPECT().Get(1).Return(donation, true)
-	donation.Payment = 200
-	s.mockDonation.EXPECT().Update(donation).Return(nil)
+	s.mockApp.EXPECT().UpdateDonation(1, 111, 200, false).Return(donation, nil)
 	s.Require().NoError(h.UpdateDonation(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
 
 	var pDonationsJSON = `{"id":1,"payment":200,"locked":false,"paid":false,"project":33}`
-
 	s.Require().Equal(pDonationsJSON, strings.Trim(rec.Body.String(), "\n"))
-	s.Require().Equal(33, <-recalcChan)
 }
 
 func (s *DonationSuite) TestDeleteDonation() {
@@ -234,27 +203,16 @@ func (s *DonationSuite) TestDeleteDonation() {
 	c.SetParamNames("id")
 	c.SetParamValues("1")
 
-	expect := &models.Donation{
-		ID:        1,
-		UserID:    111,
-		ProjectID: 44,
-	}
-
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["id"] = float64(111)
 	c.Set("user", token)
 
-	app := app.New(nil, nil, nil, nil, s.mockDonation, nil, nil, "", recalcChan)
-	h := NewDonationHandler(app)
+	h := NewDonationHandler(s.mockApp)
+	s.mockApp.EXPECT().DeleteDonation(1, 111).Return(nil)
 
-	s.mockDonation.EXPECT().Get(1).Return(expect, true)
-	s.mockDonation.EXPECT().Delete(expect).Return(nil)
 	s.Require().NoError(h.DeleteDonation(c))
 	s.Require().Equal(http.StatusNoContent, rec.Code)
-
-	s.Require().Equal("", rec.Body.String())
-	s.Require().Equal(44, <-recalcChan)
 }
 
 func TestDonationSuite(t *testing.T) {

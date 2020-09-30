@@ -11,24 +11,23 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/FreakyGranny/launchpad-api/internal/app"
-	"github.com/FreakyGranny/launchpad-api/internal/mocks"
+	mockapp "github.com/FreakyGranny/launchpad-api/internal/app/mock"
 	"github.com/FreakyGranny/launchpad-api/internal/models"
 )
 
 type ProjectTypeSuite struct {
 	suite.Suite
-	mockProjectTypeCtl *gomock.Controller
-	mockProjectType    *mocks.MockProjectTypeImpl
+	mockAppCtl *gomock.Controller
+	mockApp    *mockapp.MockApplication
 }
 
 func (s *ProjectTypeSuite) SetupTest() {
-	s.mockProjectTypeCtl = gomock.NewController(s.T())
-	s.mockProjectType = mocks.NewMockProjectTypeImpl(s.mockProjectTypeCtl)
+	s.mockAppCtl = gomock.NewController(s.T())
+	s.mockApp = mockapp.NewMockApplication(s.mockAppCtl)
 }
 
 func (s *ProjectTypeSuite) TearDownTest() {
-	s.mockProjectTypeCtl.Finish()
+	s.mockAppCtl.Finish()
 }
 
 func (s *ProjectTypeSuite) buildRequest() *http.Request {
@@ -46,9 +45,7 @@ func (s *ProjectTypeSuite) TestGetAllProjectTypes() {
 	c := e.NewContext(req, rec)
 	c.SetPath("/project_type")
 
-	app := app.New(nil, nil , nil, s.mockProjectType, nil, nil, nil, "", nil)
-	h := NewProjectTypeHandler(app)
-
+	h := NewProjectTypeHandler(s.mockApp)
 	projectTypes := []models.ProjectType{
 		{
 			ID:            1,
@@ -69,14 +66,12 @@ func (s *ProjectTypeSuite) TestGetAllProjectTypes() {
 			EndByGoalGain: true,
 		},
 	}
-
-	s.mockProjectType.EXPECT().GetAll().Return(projectTypes, nil)
+	s.mockApp.EXPECT().GetProjectTypes().Return(projectTypes, nil)
 
 	s.Require().NoError(h.GetProjectTypes(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
 
 	var ptJSON = `[{"id":1,"alias":"other","name":"Other","options":[],"goal_by_people":true,"goal_by_amount":false,"end_by_goal_gain":true},{"id":2,"alias":"some","name":"Some","options":[],"goal_by_people":false,"goal_by_amount":true,"end_by_goal_gain":true}]`
-
 	s.Require().Equal(ptJSON, strings.Trim(rec.Body.String(), "\n"))
 }
 

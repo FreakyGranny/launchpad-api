@@ -13,23 +13,23 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/FreakyGranny/launchpad-api/internal/app"
-	"github.com/FreakyGranny/launchpad-api/internal/mocks"
+	mockapp "github.com/FreakyGranny/launchpad-api/internal/app/mock"
 	"github.com/FreakyGranny/launchpad-api/internal/models"
 )
 
 type UserSuite struct {
 	suite.Suite
-	mockUserCtl *gomock.Controller
-	mockUser    *mocks.MockUserImpl
+	mockAppCtl *gomock.Controller
+	mockApp    *mockapp.MockApplication
 }
 
 func (s *UserSuite) SetupTest() {
-	s.mockUserCtl = gomock.NewController(s.T())
-	s.mockUser = mocks.NewMockUserImpl(s.mockUserCtl)
+	s.mockAppCtl = gomock.NewController(s.T())
+	s.mockApp = mockapp.NewMockApplication(s.mockAppCtl)
 }
 
 func (s *UserSuite) TearDownTest() {
-	s.mockUserCtl.Finish()
+	s.mockAppCtl.Finish()
 }
 
 func (s *UserSuite) buildRequest() *http.Request {
@@ -49,30 +49,29 @@ func (s *UserSuite) TestGetUserByID() {
 	c.SetParamNames("id")
 	c.SetParamValues("1")
 
-	app := app.New(nil, s.mockUser , nil, nil, nil, nil, nil, "", nil)
-	h := NewUserHandler(app)
-
-	user := &models.User{
-		ID:        1,
-		Username:  "X",
-		FirstName: "Y",
-		LastName:  "Z",
-		Avatar:    "A",
-		Email:     "E",
-	}
-	pts := []models.Participation{
-		{
-			Cnt:           1,
-			ProjectTypeID: 1,
+	h := NewUserHandler(s.mockApp)
+	user := &app.ExtendedUser{
+		User: models.User{
+			ID:        1,
+			Username:  "X",
+			FirstName: "Y",
+			LastName:  "Z",
+			Avatar:    "A",
+			Email:     "E",
 		},
-		{
-			Cnt:           2,
-			ProjectTypeID: 2,
+		Participation: []models.Participation{
+			{
+				Cnt:           1,
+				ProjectTypeID: 1,
+			},
+			{
+				Cnt:           2,
+				ProjectTypeID: 2,
+			},
 		},
 	}
 
-	s.mockUser.EXPECT().Get(1).Return(user, true)
-	s.mockUser.EXPECT().GetParticipation(1).Return(pts, nil)
+	s.mockApp.EXPECT().GetUser(1).Return(user, nil)
 
 	s.Require().NoError(h.GetUser(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
@@ -91,10 +90,9 @@ func (s *UserSuite) TestGetUserNotFound() {
 	c.SetParamNames("id")
 	c.SetParamValues("1")
 
-	app := app.New(nil, s.mockUser , nil, nil, nil, nil, nil, "", nil)
-	h := NewUserHandler(app)
+	h := NewUserHandler(s.mockApp)
 
-	s.mockUser.EXPECT().Get(1).Return(&models.User{}, false)
+	s.mockApp.EXPECT().GetUser(1).Return(nil, app.ErrUserNotFound)
 
 	s.Require().NoError(h.GetUser(c))
 	s.Require().Equal(http.StatusNotFound, rec.Code)
@@ -108,36 +106,34 @@ func (s *UserSuite) TestGetCurrentUser() {
 	c := e.NewContext(req, rec)
 	c.SetPath("/user/")
 
-	user := &models.User{
-		ID:        1,
-		Username:  "X",
-		FirstName: "Y",
-		LastName:  "Z",
-		Avatar:    "A",
-		Email:     "E",
+	user := &app.ExtendedUser{
+		User: models.User{
+			ID:        1,
+			Username:  "X",
+			FirstName: "Y",
+			LastName:  "Z",
+			Avatar:    "A",
+			Email:     "E",
+		},
+		Participation: []models.Participation{
+			{
+				Cnt:           1,
+				ProjectTypeID: 1,
+			},
+			{
+				Cnt:           2,
+				ProjectTypeID: 2,
+			},
+		},
 	}
-
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["id"] = float64(user.ID)
 
 	c.Set("user", token)
-	app := app.New(nil, s.mockUser , nil, nil, nil, nil, nil, "", nil)
-	h := NewUserHandler(app)
+	h := NewUserHandler(s.mockApp)
 
-	s.mockUser.EXPECT().Get(1).Return(user, true)
-	pts := []models.Participation{
-		{
-			Cnt:           1,
-			ProjectTypeID: 1,
-		},
-		{
-			Cnt:           2,
-			ProjectTypeID: 2,
-		},
-	}
-	s.mockUser.EXPECT().GetParticipation(1).Return(pts, nil)
-
+	s.mockApp.EXPECT().GetUser(1).Return(user, nil)
 	s.Require().NoError(h.GetCurrentUser(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
 

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -11,24 +12,23 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/FreakyGranny/launchpad-api/internal/app"
-	"github.com/FreakyGranny/launchpad-api/internal/mocks"
+	mockapp "github.com/FreakyGranny/launchpad-api/internal/app/mock"
 	"github.com/FreakyGranny/launchpad-api/internal/models"
 )
 
 type CategorySuite struct {
 	suite.Suite
-	mockCategoryCtl *gomock.Controller
-	mockCategory    *mocks.MockCategoryImpl
+	mockAppCtl *gomock.Controller
+	mockApp    *mockapp.MockApplication
 }
 
 func (s *CategorySuite) SetupTest() {
-	s.mockCategoryCtl = gomock.NewController(s.T())
-	s.mockCategory = mocks.NewMockCategoryImpl(s.mockCategoryCtl)
+	s.mockAppCtl = gomock.NewController(s.T())
+	s.mockApp = mockapp.NewMockApplication(s.mockAppCtl)
 }
 
 func (s *CategorySuite) TearDownTest() {
-	s.mockCategoryCtl.Finish()
+	s.mockAppCtl.Finish()
 }
 
 func (s *CategorySuite) buildRequest() *http.Request {
@@ -46,8 +46,7 @@ func (s *CategorySuite) TestGetAllCategories() {
 	c := e.NewContext(req, rec)
 	c.SetPath("/category")
 
-	app := app.New(s.mockCategory, nil, nil, nil, nil, nil, nil, "", nil)
-	h := NewCategoryHandler(app)
+	h := NewCategoryHandler(s.mockApp)
 
 	categories := []models.Category{
 		{
@@ -62,7 +61,7 @@ func (s *CategorySuite) TestGetAllCategories() {
 		},
 	}
 
-	s.mockCategory.EXPECT().GetAll().Return(categories, nil)
+	s.mockApp.EXPECT().GetCategories().Return(categories, nil)
 
 	s.Require().NoError(h.GetCategories(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
@@ -80,9 +79,8 @@ func (s *CategorySuite) TestNoCategories() {
 	c := e.NewContext(req, rec)
 	c.SetPath("/category")
 
-	app := app.New(s.mockCategory, nil, nil, nil, nil, nil, nil, "", nil)
-	h := NewCategoryHandler(app)
-	s.mockCategory.EXPECT().GetAll().Return([]models.Category{}, nil)
+	h := NewCategoryHandler(s.mockApp)
+	s.mockApp.EXPECT().GetCategories().Return([]models.Category{}, nil)
 
 	s.Require().NoError(h.GetCategories(c))
 	s.Require().Equal(http.StatusOK, rec.Code)
@@ -90,6 +88,21 @@ func (s *CategorySuite) TestNoCategories() {
 	var emptyJSON = "[]\n"
 
 	s.Require().Equal(emptyJSON, rec.Body.String())
+}
+
+func (s *CategorySuite) TestError() {
+	req := s.buildRequest()
+
+	e := echo.New()
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/category")
+
+	h := NewCategoryHandler(s.mockApp)
+	s.mockApp.EXPECT().GetCategories().Return(nil, errors.New("some error"))
+
+	s.Require().NoError(h.GetCategories(c))
+	s.Require().Equal(http.StatusInternalServerError, rec.Code)
 }
 
 func TestCategorySuite(t *testing.T) {
