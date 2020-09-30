@@ -1,5 +1,26 @@
 basePath: /
 definitions:
+  app.ExtendedUser:
+    properties:
+      avatar:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: integer
+      last_name:
+        type: string
+      participation:
+        items:
+          $ref: '#/definitions/models.Participation'
+        type: array
+      project_count:
+        type: integer
+      success_rate:
+        type: number
+      username:
+        type: string
+    type: object
   handlers.DonationCreateRequest:
     properties:
       payment:
@@ -12,11 +33,6 @@ definitions:
       paid:
         type: boolean
       payment:
-        type: integer
-    type: object
-  handlers.ProjectCreateResponse:
-    properties:
-      id:
         type: integer
     type: object
   handlers.ProjectDetailView:
@@ -115,27 +131,6 @@ definitions:
   handlers.TokenResponse:
     properties:
       token:
-        type: string
-    type: object
-  handlers.extendedUser:
-    properties:
-      avatar:
-        type: string
-      first_name:
-        type: string
-      id:
-        type: integer
-      last_name:
-        type: string
-      participation:
-        items:
-          $ref: '#/definitions/models.Participation'
-        type: array
-      project_count:
-        type: integer
-      success_rate:
-        type: number
-      username:
         type: string
     type: object
   models.Category:
@@ -402,47 +397,7 @@ paths:
       summary: Returns list of projects
       tags:
       - project
-    post:
-      consumes:
-      - application/json
-      description: Create new project
-      operationId: post-project
-      parameters:
-      - description: Request body
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handlers.DonationCreateRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.ProjectCreateResponse'
-      security:
-      - Bearer: []
-      summary: Create project
-      tags:
-      - project
   /project/{id}:
-    delete:
-      description: Delete not published project
-      operationId: delete-project
-      parameters:
-      - description: Project ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      responses:
-        "204": {}
-      security:
-      - Bearer: []
-      summary: Delete not published project
-      tags:
-      - project
     get:
       description: Returns project by ID
       operationId: get-project-by-id
@@ -524,7 +479,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.extendedUser'
+            $ref: '#/definitions/app.ExtendedUser'
       security:
       - Bearer: []
       summary: Show a current user
@@ -546,7 +501,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.extendedUser'
+            $ref: '#/definitions/app.ExtendedUser'
       security:
       - Bearer: []
       summary: Show a specific user

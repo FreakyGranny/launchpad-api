@@ -6,8 +6,8 @@ import (
 
 	"github.com/labstack/gommon/log"
 
-	"github.com/FreakyGranny/launchpad-api/internal/app/config"
-	"github.com/FreakyGranny/launchpad-api/internal/app/db"
+	"github.com/FreakyGranny/launchpad-api/internal/config"
+	"github.com/FreakyGranny/launchpad-api/internal/db"
 	_ "github.com/FreakyGranny/launchpad-api/migrations" //
 	"github.com/go-pg/migrations/v8"
 	"github.com/spf13/cobra"

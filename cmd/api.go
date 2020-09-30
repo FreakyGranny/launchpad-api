@@ -4,22 +4,17 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"sync"
 
 	"github.com/jonboulle/clockwork"
 	"github.com/labstack/gommon/log"
 
-	_ "github.com/FreakyGranny/launchpad-api/docs" // openAPI
-	"github.com/FreakyGranny/launchpad-api/internal/app/auth"
-	"github.com/FreakyGranny/launchpad-api/internal/app/config"
-	"github.com/FreakyGranny/launchpad-api/internal/app/db"
-	"github.com/FreakyGranny/launchpad-api/internal/app/handlers"
-	"github.com/FreakyGranny/launchpad-api/internal/app/misc"
-	"github.com/FreakyGranny/launchpad-api/internal/app/models"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/FreakyGranny/launchpad-api/internal/app"
+	"github.com/FreakyGranny/launchpad-api/internal/auth"
+	"github.com/FreakyGranny/launchpad-api/internal/config"
+	"github.com/FreakyGranny/launchpad-api/internal/db"
+	"github.com/FreakyGranny/launchpad-api/internal/models"
+	"github.com/FreakyGranny/launchpad-api/internal/server"
 	"github.com/spf13/cobra"
-	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 // @title Launchpad API
@@ -51,76 +46,20 @@ func API(cmd *cobra.Command, args []string) {
 	}
 	defer d.Close()
 
+	sModel := models.NewSystemModel(d)
 	pModel := models.NewProjectModel(d)
+	ptModel := models.NewProjectTypeModel(d)
 	uModel := models.NewUserModel(d)
+	cModel := models.NewCategoryModel(d)
+	dModel := models.NewDonationModel(d)
 
 	ctx, cancel := context.WithCancel(context.Background())
-
-	b := misc.NewBackground(models.NewSystemModel(d), pModel, uModel)
-	wg := &sync.WaitGroup{}
-	defer wg.Wait()
-
-	go b.PeriodicCheck(ctx, wg)
-	go b.RecalcProject(wg)
-	go b.CheckSearch(wg)
-	go b.HarvestCheck(wg)
-	go b.UpdateUser(wg)
-	wg.Add(5)
-
-	e := echo.New()
-	e.GET("/docs/*", echoSwagger.WrapHandler)
-
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{AllowOrigins: []string{"*"}}))
-
-	JWTmiddleware := middleware.JWT([]byte(cfg.JWTSecret))
-
-	ha := handlers.NewAuthHandler(
-		cfg.JWTSecret,
-		models.NewUserModel(d),
-		auth.NewVk(cfg.Vk),
-		clockwork.NewRealClock(),
+	b := app.NewBackground(sModel, pModel, uModel)
+	b.Start(ctx)
+	e := server.New(
+		app.New(cModel, uModel, pModel, ptModel, dModel, auth.NewVk(cfg.Vk), clockwork.NewRealClock(), cfg.JWTSecret, b.GetRecalcPipe()),
+		[]byte(cfg.JWTSecret),
 	)
-
-	e.POST("/login", ha.Login)
-	e.OPTIONS("/login", ha.Login)
-
-	hu := handlers.NewUserHandler(uModel)
-	u := e.Group("/user")
-	u.Use(JWTmiddleware)
-	u.GET("", hu.GetCurrentUser)
-	u.GET("/:id", hu.GetUser)
-
-	hc := handlers.NewCategoryHandler(models.NewCategoryModel(d))
-	c := e.Group("/category")
-	c.Use(JWTmiddleware)
-	c.GET("", hc.GetCategories)
-
-	hpt := handlers.NewProjectTypeHandler(models.NewProjectTypeModel(d))
-	pt := e.Group("/project_type")
-	pt.Use(JWTmiddleware)
-	pt.GET("", hpt.GetProjectTypes)
-
-	hp := handlers.NewProjectHandler(pModel)
-	p := e.Group("/project")
-	p.Use(JWTmiddleware)
-	p.GET("", hp.GetProjects)
-	p.GET("/user/:id", hp.GetUserProjects)
-	p.GET("/:id", hp.GetSingleProject)
-	p.POST("", hp.CreateProject)
-	p.PATCH("/:id", hp.UpdateProject)
-	p.DELETE("/:id", hp.DeleteProject)
-
-	hd := handlers.NewDonationHandler(models.NewDonationModel(d), b.GetRecalcPipe())
-	dg := e.Group("/donation")
-	dg.Use(JWTmiddleware)
-	dg.GET("", hd.GetUserDonations)
-	dg.GET("/project/:id", hd.GetProjectDonations)
-	dg.POST("", hd.CreateDonation)
-	dg.DELETE("/:id", hd.DeleteDonation)
-	dg.PATCH("/:id", hd.UpdateDonation)
-
 	go func() {
 		if err := e.Start(":1323"); err != nil {
 			e.Logger.Info("shutting down the server")
@@ -135,6 +74,7 @@ func API(cmd *cobra.Command, args []string) {
 		e.Logger.Fatal(err)
 	}
 	cancel()
+	b.Wait()
 }
 
 // NewAPICmd return api command
